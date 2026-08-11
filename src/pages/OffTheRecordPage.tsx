@@ -11,7 +11,7 @@ const mockStories = Array.from({ length: 8 }).map((_, i) => ({
 export default function OffTheRecordPage() {
   return (
     <div className="px-6 py-8">
-      <section className="mb-8 rounded-lg bg-palette-surface px-6 py-12 text-center">
+      <section className="mb-8 rounded-lg bg-palette-section px-6 py-12 text-center">
         <h1 className="text-2xl font-bold">off the record</h1>
         <p className="mt-2 text-sm text-palette-muted">
           크리에이터들의 생생한 창작 현장
@@ -27,7 +27,7 @@ export default function OffTheRecordPage() {
             rel="noopener noreferrer"
             className="group"
           >
-            <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-200">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-palette-placeholder">
               <img
                 src={story.thumbnailUrl}
                 alt={story.title}

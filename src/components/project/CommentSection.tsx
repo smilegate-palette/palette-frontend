@@ -42,18 +42,18 @@ export default function CommentSection({
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
           placeholder="닉네임"
-          className="rounded-full border border-palette-border bg-palette-surface px-4 py-2 text-sm outline-none sm:w-32"
+          className="rounded-xl bg-palette-input px-4 py-2 text-sm text-black outline-none placeholder:text-palette-muted sm:w-32"
         />
         <input
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="댓글을 입력하세요"
-          className="flex-1 rounded-full border border-palette-border bg-palette-surface px-4 py-2 text-sm outline-none"
+          className="flex-1 rounded-xl bg-palette-input px-4 py-2 text-sm text-black outline-none placeholder:text-palette-muted"
         />
         <button
           onClick={handleSubmit}
           disabled={submitting || !content.trim() || !nickname.trim()}
-          className="rounded-full bg-palette-accent px-4 py-2 text-sm font-semibold text-palette-text disabled:opacity-50"
+          className="rounded-xl bg-palette-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
           등록
         </button>

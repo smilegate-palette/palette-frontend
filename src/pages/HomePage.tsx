@@ -10,8 +10,14 @@ export default function HomePage() {
   const [allProjects, setAllProjects] = useState<Project[]>([]);
 
   useEffect(() => {
-    getHomeProjects().then(setFeaturedProjects);
-    getProjects().then((res) => setAllProjects(res.projects));
+    // 비로그인 상태에서 401/403이 나도 홈 화면 자체는 깨지지 않게 조용히 무시하고 빈 목록으로 둠
+    // (로그인 요구 안내는 PROJECT 목록 페이지 쪽에서 명확히 보여줌)
+    getHomeProjects()
+      .then(setFeaturedProjects)
+      .catch(() => setFeaturedProjects([]));
+    getProjects()
+      .then((res) => setAllProjects(res.projects))
+      .catch(() => setAllProjects([]));
   }, []);
 
   const workshopProjects = allProjects.filter((p) => p.program === "창의워크숍");
@@ -19,21 +25,24 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* 히어로 배너: 플랫폼 메인 카피 + 배경 비주얼, CTA 버튼 포함 (구축 기획(안) 컴포넌트 명세 기준) */}
-      <section className="flex flex-col items-center gap-3 bg-palette-surface px-6 py-16 text-center">
-        <p className="text-xs uppercase tracking-widest text-palette-muted">
+      {/* 히어로 배너: Figma node 3:3 실제 시안 기준 (좌측 정렬, 배경 #ececec) */}
+      <section className="flex flex-col gap-4 bg-palette-section px-6 py-16 md:py-24">
+        <p className="text-sm font-medium uppercase tracking-widest text-palette-muted">
           PALETTE YOUTH CREATIVE PLATFORM
         </p>
-        <h1 className="text-2xl font-bold">나다운 크리에이터로 자라는 곳</h1>
-        <p className="text-sm text-palette-muted">
+        <h1 className="text-3xl font-bold md:text-4xl">나다운 크리에이터로 자라는 곳</h1>
+        <p className="text-base text-black">
           지역아동센터 아동·청소년 창작자들의 프로젝트 아카이빙 + 크리에이터 커뮤니티
         </p>
-        <Link
-          to="/project"
-          className="mt-2 rounded-full bg-palette-accent px-5 py-2 text-sm font-semibold text-palette-text"
-        >
-          프로젝트 탐색하기 →
-        </Link>
+        <div className="mt-2 flex items-center gap-4">
+          <Link
+            to="/project"
+            className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white"
+          >
+            프로젝트 탐색하기 →
+          </Link>
+          <span className="text-sm text-palette-muted">또는 ↓ 스크롤</span>
+        </div>
       </section>
 
       <HeroSlider projects={featuredProjects} />
@@ -45,7 +54,7 @@ export default function HomePage() {
       <div className="flex justify-center px-6 py-10">
         <Link
           to="/project"
-          className="rounded-full border border-palette-border bg-palette-surface px-6 py-3 text-sm font-semibold hover:border-palette-accent"
+          className="rounded-full border border-palette-border bg-white px-6 py-3 text-sm font-semibold hover:border-palette-accent"
         >
           전체 프로젝트 보러가기
         </Link>

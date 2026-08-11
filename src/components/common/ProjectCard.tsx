@@ -6,7 +6,7 @@ import { Project } from "@/lib/types/project";
 export default function ProjectCard({ project }: { project: Project }) {
   return (
     <Link to={`/project/${project.id}`} className="group w-56 shrink-0">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-gray-200 transition-transform group-hover:scale-[1.02]">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-palette-placeholder transition-transform group-hover:scale-[1.02]">
         <img
           src={project.thumbnailUrl}
           alt={project.title}

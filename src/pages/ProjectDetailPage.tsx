@@ -55,7 +55,7 @@ export default function ProjectDetailPage() {
       {/* TODO: 미디어 영역 - 컴포넌트 명세 기준 YouTube/Vimeo 임베드, 파일 업로드 영상,
           웹 링크(iframe), 이미지 갤러리(슬라이더)를 업로드 유형에 따라 다르게 렌더링해야 함.
           지금은 이미지 1장만 처리. 업로드 폼 만들 때 같이 확장 필요. */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-gray-200">
+      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-palette-placeholder">
         <img
           src={project.mediaUrl ?? project.thumbnailUrl}
           alt={project.title}

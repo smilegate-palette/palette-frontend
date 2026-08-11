@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getProjects } from "@/lib/api/projects";
+import { ApiError } from "@/lib/api/client";
+import { Link } from "react-router-dom";
 import {
   Project,
   ProjectListParams,
@@ -8,15 +10,16 @@ import {
   ProgramType,
 } from "@/lib/types/project";
 import { mockRegions } from "@/data/mockProjects";
-import ProjectCard from "@/components/common/ProjectCard";
+import ProjectGridCard from "@/components/common/ProjectGridCard";
 
-// 기획 문서 기준 확정된 필터 체계: 프로그램 / 연도 / 형태 / 지역 / 검색 + 정렬(최신순/인기순)
+// 기획 문서 + Figma(node 8:63) 기준 확정된 필터 체계: 프로그램 / 연도 / 형태 / 지역 / 검색 + 정렬
 const YEAR_FILTERS = ["ALL", 2026, 2025, 2024, "~2023"] as const;
 const PROGRAM_FILTERS: ProgramType[] = ["창의워크숍", "유스파티"];
 
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState(false);
   const [yearFilter, setYearFilter] = useState<(typeof YEAR_FILTERS)[number]>("ALL");
   const [programFilter, setProgramFilter] = useState<ProgramType | null>(null);
   const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
@@ -45,8 +48,16 @@ export default function ProjectListPage() {
     if (keyword.length >= 2) params.keyword = keyword;
 
     setLoading(true);
+    setAuthError(false);
     getProjects(params)
       .then((res) => setProjects(res.projects))
+      .catch((err) => {
+        // 백엔드가 로그인 여부를 먼저 확인하는 구조라, 비로그인 상태면 401/403이 날 수 있음
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          setAuthError(true);
+        }
+        setProjects([]);
+      })
       .finally(() => setLoading(false));
   }, [yearFilter, programFilter, typeFilter, regionFilter, keyword, sort]);
 
@@ -58,9 +69,9 @@ export default function ProjectListPage() {
   return (
     <div className="px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">프로젝트 목록</h1>
+        <h1 className="text-3xl font-bold text-black">프로젝트 목록</h1>
         {/* 프로젝트 등록: 회원 로그인 시에만 노출 (권한 매트릭스 기준) - 로그인 미구현이라 우선 항상 노출 */}
-        <button className="rounded-full bg-palette-accent px-4 py-2 text-sm font-semibold text-palette-text">
+        <button className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white shadow-sm">
           + 프로젝트 올리기
         </button>
       </div>
@@ -108,23 +119,34 @@ export default function ProjectListPage() {
             onClick={() => setRegionFilter(regionFilter === region ? null : region)}
           />
         ))}
-        {hasActiveFilters && (
+      </div>
+
+      {hasActiveFilters && (
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          {keyword && (
+            <span className="flex items-center gap-1 rounded-xl bg-palette-highlight px-3 py-1.5 text-sm text-black">
+              {keyword}
+              <button onClick={() => setKeyword("")} aria-label="검색어 지우기">
+                ×
+              </button>
+            </span>
+          )}
           <button
             onClick={resetFilters}
             className="text-xs text-palette-muted underline underline-offset-2"
           >
             선택된 필터 초기화
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-full border border-palette-border bg-palette-surface px-4 py-2">
+        <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-xl bg-palette-input px-4 py-3 shadow-sm">
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="프로젝트명, 참여자명으로 검색"
-            className="flex-1 bg-transparent text-sm outline-none"
+            className="flex-1 bg-transparent text-sm text-black outline-none placeholder:text-palette-muted"
           />
           <span aria-hidden>🔍</span>
         </div>
@@ -132,16 +154,28 @@ export default function ProjectListPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as "latest" | "popular")}
-          className="rounded-full border border-palette-border bg-palette-surface px-3 py-2 text-sm"
+          className="rounded-xl bg-palette-input px-4 py-3 text-sm text-black shadow-sm"
         >
           <option value="latest">최신순</option>
           <option value="popular">인기순</option>
         </select>
       </div>
 
-      <p className="mb-4 text-sm text-palette-muted">{resultCountLabel}</p>
+      <p className="mb-4 text-lg font-semibold text-black">{resultCountLabel}</p>
 
-      {!loading && projects.length === 0 ? (
+      {authError ? (
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <p className="text-sm text-palette-muted">
+            로그인이 필요한 페이지예요. 로그인 후 다시 시도해주세요.
+          </p>
+          <Link
+            to="/login"
+            className="rounded-xl bg-palette-accent px-4 py-2 text-sm font-semibold text-white"
+          >
+            로그인하러 가기
+          </Link>
+        </div>
+      ) : !loading && projects.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <p className="text-4xl" aria-hidden>
             🔍
@@ -152,7 +186,7 @@ export default function ProjectListPage() {
           {hasActiveFilters && (
             <button
               onClick={resetFilters}
-              className="rounded-full border border-palette-border px-4 py-2 text-sm"
+              className="rounded-xl bg-palette-section px-4 py-2 text-sm"
             >
               필터 초기화
             </button>
@@ -161,7 +195,7 @@ export default function ProjectListPage() {
       ) : (
         <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
           {projects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectGridCard key={project.id} project={project} />
           ))}
         </div>
       )}
@@ -181,10 +215,8 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`rounded-full border px-4 py-1.5 text-sm ${
-        active
-          ? "border-palette-accent bg-palette-accent text-palette-text"
-          : "border-palette-border bg-palette-surface text-palette-muted"
+      className={`rounded-xl px-4 py-2 text-sm font-medium ${
+        active ? "bg-palette-accent text-white" : "bg-palette-section text-black"
       }`}
     >
       {label}
