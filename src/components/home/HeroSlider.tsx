@@ -88,7 +88,7 @@ function SlideCard({
   return (
     <Link
       to={`/project/${project.id}`}
-      className={`relative ${dimensions} shrink-0 overflow-hidden rounded-lg bg-palette-placeholder`}
+      className={`relative ${dimensions} shrink-0 overflow-hidden rounded-lg bg-palette-placeholder shadow-card`}
     >
       <img
         src={project.thumbnailUrl}

@@ -7,6 +7,7 @@ import AboutPalettePage from "@/pages/AboutPalettePage";
 import OffTheRecordPage from "@/pages/OffTheRecordPage";
 import LoginPage from "@/pages/LoginPage";
 import SignupPage from "@/pages/SignupPage";
+import SocialCallbackPage from "@/pages/SocialCallbackPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 export default function App() {
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="off-the-record" element={<OffTheRecordPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="signup" element={<SignupPage />} />
+        <Route path="auth/callback/:provider" element={<SocialCallbackPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

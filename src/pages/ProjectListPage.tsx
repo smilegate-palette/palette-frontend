@@ -9,7 +9,6 @@ import {
   PROJECT_TYPES,
   ProgramType,
 } from "@/lib/types/project";
-import { mockRegions } from "@/data/mockProjects";
 import ProjectGridCard from "@/components/common/ProjectGridCard";
 
 // 기획 문서 + Figma(node 8:63) 기준 확정된 필터 체계: 프로그램 / 연도 / 형태 / 지역 / 검색 + 정렬
@@ -23,18 +22,15 @@ export default function ProjectListPage() {
   const [yearFilter, setYearFilter] = useState<(typeof YEAR_FILTERS)[number]>("ALL");
   const [programFilter, setProgramFilter] = useState<ProgramType | null>(null);
   const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
-  const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");
 
-  const hasActiveFilters =
-    yearFilter !== "ALL" || programFilter || typeFilter || regionFilter || keyword;
+  const hasActiveFilters = yearFilter !== "ALL" || programFilter || typeFilter || keyword;
 
   const resetFilters = () => {
     setYearFilter("ALL");
     setProgramFilter(null);
     setTypeFilter(null);
-    setRegionFilter(null);
     setKeyword("");
   };
 
@@ -43,7 +39,6 @@ export default function ProjectListPage() {
     if (typeof yearFilter === "number") params.year = yearFilter;
     if (programFilter) params.program = programFilter;
     if (typeFilter) params.type = typeFilter;
-    if (regionFilter) params.region = regionFilter;
     // 컴포넌트 명세 기준: 최소 2자 이상 입력 시 검색 실행
     if (keyword.length >= 2) params.keyword = keyword;
 
@@ -59,7 +54,7 @@ export default function ProjectListPage() {
         setProjects([]);
       })
       .finally(() => setLoading(false));
-  }, [yearFilter, programFilter, typeFilter, regionFilter, keyword, sort]);
+  }, [yearFilter, programFilter, typeFilter, keyword, sort]);
 
   const resultCountLabel = useMemo(
     () => (loading ? "불러오는 중..." : `${projects.length}개의 프로젝트를 찾았습니다`),
@@ -71,7 +66,7 @@ export default function ProjectListPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold text-black">프로젝트 목록</h1>
         {/* 프로젝트 등록: 회원 로그인 시에만 노출 (권한 매트릭스 기준) - 로그인 미구현이라 우선 항상 노출 */}
-        <button className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white shadow-sm">
+        <button className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white shadow-strong">
           + 프로젝트 올리기
         </button>
       </div>
@@ -109,18 +104,6 @@ export default function ProjectListPage() {
         ))}
       </div>
 
-      {/* 지역 목록은 실제 프로젝트 데이터 기준으로 채워지는 게 맞음 - 지금은 mock 지역으로 임시 구성 */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        {mockRegions.map((region) => (
-          <FilterChip
-            key={region}
-            label={region}
-            active={regionFilter === region}
-            onClick={() => setRegionFilter(regionFilter === region ? null : region)}
-          />
-        ))}
-      </div>
-
       {hasActiveFilters && (
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {keyword && (
@@ -141,7 +124,7 @@ export default function ProjectListPage() {
       )}
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-xl bg-palette-input px-4 py-3 shadow-sm">
+        <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-xl bg-palette-input px-4 py-3 shadow-soft">
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
@@ -154,7 +137,7 @@ export default function ProjectListPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as "latest" | "popular")}
-          className="rounded-xl bg-palette-input px-4 py-3 text-sm text-black shadow-sm"
+          className="rounded-xl bg-palette-input px-4 py-3 text-sm text-black shadow-soft"
         >
           <option value="latest">최신순</option>
           <option value="popular">인기순</option>
@@ -193,7 +176,7 @@ export default function ProjectListPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {projects.map((project) => (
             <ProjectGridCard key={project.id} project={project} />
           ))}

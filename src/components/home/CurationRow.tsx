@@ -25,8 +25,8 @@ export default function CurationRow({
           </Link>
         )}
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        {projects.slice(0, 6).map((project) => (
+      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+        {projects.slice(0, 5).map((project) => (
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>

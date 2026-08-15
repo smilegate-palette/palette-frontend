@@ -37,7 +37,7 @@ export default function HomePage() {
         <div className="mt-2 flex items-center gap-4">
           <Link
             to="/project"
-            className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white"
+            className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white shadow-card"
           >
             프로젝트 탐색하기 →
           </Link>

@@ -30,6 +30,12 @@ const config: Config = {
           "sans-serif",
         ],
       },
+      // Figma 실제 시안에서 확인된 그림자 값 (2026.08, node 3:3 / 8:63)
+      boxShadow: {
+        soft: "0px 4px 10px 0px rgba(0,0,0,0.1)", // 검색창, 정렬 드롭다운
+        strong: "0px 4px 10px 0px rgba(0,0,0,0.2)", // "+ 프로젝트 올리기" 버튼
+        card: "0px 4px 4px 0px rgba(0,0,0,0.25)", // 히어로 슬라이더 이미지 박스, HOME CTA 버튼
+      },
     },
   },
   plugins: [],
