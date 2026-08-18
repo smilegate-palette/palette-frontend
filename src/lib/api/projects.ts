@@ -1,6 +1,7 @@
 import { apiFetch, USE_MOCK } from "./client";
 import { mockProjects } from "@/data/mockProjects";
 import { Project, ProjectListParams, ProjectListResponse } from "@/lib/types/project";
+import { getStoredEmail } from "@/lib/auth/token";
 
 // 2026.08.11 배포된 실제 Swagger(v0, /v3/api-docs) 재확인 기준 엔드포인트:
 //   GET    /api/project                        목록 조회 (엔드포인트.csv엔 /api/project/index였는데 실제론 /index 없음)
@@ -90,6 +91,51 @@ export async function getProjectDetail(id: string): Promise<Project | undefined>
   // TODO: 2026.08.11 재확인한 실제 Swagger(v0)에도 상세 조회 엔드포인트가 여전히 없음.
   // USE_MOCK 값과 무관하게 mock 사용 - 백엔드에 엔드포인트 추가되면 이 조건 지우고 실제 연동.
   return mockProjects.find((p) => p.id === id);
+}
+
+export interface CreateProjectPayload {
+  program: Project["program"];
+  year: number;
+  title: string;
+  types: string[]; // 업로드 폼은 자유 태그 입력 - 아래에서 category 매핑 시 주의
+  region?: string;
+  organization?: string;
+  participants?: string[];
+  description: string;
+  mediaUrl?: string;
+}
+
+export async function createProject(payload: CreateProjectPayload): Promise<void> {
+  // ⚠️ 로그인 응답(UserLoginResponse)에 user_id가 내려오지 않아서, 등록 엔드포인트
+  //    POST /api/project/{user_id}에 넣을 진짜 user_id를 만들 방법이 없습니다.
+  //    백엔드에서 user_id를 내려주기 전까진 이메일을 placeholder로 넣어서 요청을 보내고,
+  //    (십중팔구 서버가 거부하거나 엉뚱한 값으로 처리할 거예요) 실패 시 UploadPage에서
+  //    안내 메시지를 보여줍니다. user_id가 내려오게 되면 이 부분만 고치면 됩니다.
+  const placeholderUserId = getStoredEmail() ?? "unknown";
+
+  // ⚠️ 백엔드 ProjectRequest.category는 단일 enum(GAME/AI/VIDEO...)인데, 업로드 폼은
+  //    자유 태그 입력(예: "게임", "유니티")이라 값 형태가 안 맞을 수 있습니다.
+  //    우선 첫 번째 태그만 category로 보냅니다 - 실제 값 검증은 백엔드 확인 필요.
+  const body = {
+    project_title: payload.title,
+    program_name: payload.program,
+    year: payload.year,
+    region: payload.region,
+    partipants: payload.participants ?? [], // 스펙 오타(participants) 그대로 맞춤
+    description: payload.description,
+    category: payload.types[0],
+    media_url: payload.mediaUrl,
+  };
+
+  if (USE_MOCK) {
+    // mock 모드에서는 실제 등록 없이 성공한 것처럼 처리 (개발 중 폼 확인용)
+    return;
+  }
+
+  await apiFetch<void>(`/api/project/${encodeURIComponent(placeholderUserId)}`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
 export async function getHomeProjects(): Promise<Project[]> {

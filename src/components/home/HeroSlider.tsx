@@ -33,28 +33,30 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
 
   return (
     <section
-      className="px-6 py-8"
+      className="px-4 py-6 md:px-6 md:py-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-center gap-2 md:gap-4">
         <button
           aria-label="이전 프로젝트"
           onClick={() => setActiveIndex((prev) => (prev - 1 + projects.length) % projects.length)}
-          className="text-2xl text-palette-muted"
+          className="text-xl text-palette-muted md:text-2xl"
         >
           ‹
         </button>
 
-        {/* 사이드 프로젝트는 작게, 메인은 크게 - 디자인 기획 미확정 항목이라 임시 비율 적용 */}
-        <SlideCard project={prevSlide} size="small" />
+        {/* 모바일(Figma node 52:3)은 좌우 카드가 살짝만 보이는 구조인데, 폭이 좁아 완전히 겹치기 쉬워서
+            일단 sm 미만에서는 메인 카드만 보이는 단순화된 캐러셀로 구현했습니다.
+            좌우 카드가 살짝 보이는 것까지 픽셀 단위로 맞추려면 별도 요청해주세요. */}
+        <SlideCard project={prevSlide} size="small" className="hidden sm:block" />
         <SlideCard project={activeSlide} size="large" />
-        <SlideCard project={nextSlide} size="small" />
+        <SlideCard project={nextSlide} size="small" className="hidden sm:block" />
 
         <button
           aria-label="다음 프로젝트"
           onClick={() => setActiveIndex((prev) => (prev + 1) % projects.length)}
-          className="text-2xl text-palette-muted"
+          className="text-xl text-palette-muted md:text-2xl"
         >
           ›
         </button>
@@ -80,15 +82,18 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
 function SlideCard({
   project,
   size,
+  className = "",
 }: {
   project: Project;
   size: "small" | "large";
+  className?: string;
 }) {
-  const dimensions = size === "large" ? "h-72 w-[420px]" : "h-56 w-72";
+  const dimensions =
+    size === "large" ? "h-44 w-[260px] md:h-72 md:w-[420px]" : "h-56 w-72";
   return (
     <Link
       to={`/project/${project.id}`}
-      className={`relative ${dimensions} shrink-0 overflow-hidden rounded-lg bg-palette-placeholder shadow-card`}
+      className={`relative ${dimensions} shrink-0 overflow-hidden rounded-lg bg-palette-placeholder shadow-card ${className}`}
     >
       <img
         src={project.thumbnailUrl}

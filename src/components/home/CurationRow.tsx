@@ -16,16 +16,16 @@ export default function CurationRow({
   if (projects.length === 0) return null;
 
   return (
-    <section className="px-6 py-6">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-bold">{title}</h2>
+    <section className="px-4 py-4 md:px-6 md:py-6">
+      <div className="mb-2 flex items-center justify-between md:mb-3">
+        <h2 className="text-sm font-bold md:text-base">{title}</h2>
         {moreHref && (
           <Link to={moreHref} className="text-xs text-palette-muted hover:text-palette-text">
             더보기 →
           </Link>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-5 lg:grid-cols-5">
         {projects.slice(0, 5).map((project) => (
           <ProjectCard key={project.id} project={project} />
         ))}

@@ -8,7 +8,7 @@ export default function ProjectGridCard({ project }: { project: Project }) {
   return (
     <Link
       to={`/project/${project.id}`}
-      className="block overflow-hidden rounded-2xl bg-palette-card transition-shadow hover:shadow-md"
+      className="block overflow-hidden rounded-xl bg-palette-card transition-shadow hover:shadow-md md:rounded-2xl"
     >
       <div className="aspect-[16/10] w-full overflow-hidden bg-palette-placeholder">
         <img
@@ -18,10 +18,10 @@ export default function ProjectGridCard({ project }: { project: Project }) {
           loading="lazy"
         />
       </div>
-      <div className="p-4">
-        <p className="text-xs text-black">{project.year}</p>
-        <p className="mt-1 text-sm text-black">{project.types.join(", ")}</p>
-        <p className="mt-1 text-lg font-semibold text-black">{project.title}</p>
+      <div className="p-2.5 md:p-4">
+        <p className="text-[10px] text-black md:text-xs">{project.year}</p>
+        <p className="mt-0.5 text-xs text-black md:mt-1 md:text-sm">{project.types.join(", ")}</p>
+        <p className="mt-0.5 text-sm font-semibold text-black md:mt-1 md:text-lg">{project.title}</p>
       </div>
     </Link>
   );

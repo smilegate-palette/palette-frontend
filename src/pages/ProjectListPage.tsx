@@ -62,13 +62,16 @@ export default function ProjectListPage() {
   );
 
   return (
-    <div className="px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-black">프로젝트 목록</h1>
-        {/* 프로젝트 등록: 회원 로그인 시에만 노출 (권한 매트릭스 기준) - 로그인 미구현이라 우선 항상 노출 */}
-        <button className="rounded-xl bg-palette-accent px-6 py-3 text-base font-semibold text-white shadow-strong">
+    <div className="px-4 py-6 md:px-6 md:py-8">
+      <div className="mb-4 flex items-center justify-between md:mb-6">
+        <h1 className="text-xl font-bold text-black md:text-3xl">프로젝트 목록</h1>
+        {/* 프로젝트 등록: 로그인 여부와 무관하게 버튼은 노출하고, 비로그인이면 업로드 페이지에서 로그인 유도 (권한 매트릭스 기준) */}
+        <Link
+          to="/project/upload"
+          className="rounded-lg bg-palette-accent px-3 py-2 text-xs font-semibold text-white shadow-strong md:rounded-xl md:px-6 md:py-3 md:text-base"
+        >
           + 프로젝트 올리기
-        </button>
+        </Link>
       </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -123,13 +126,14 @@ export default function ProjectListPage() {
         </div>
       )}
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className="flex flex-1 min-w-[220px] items-center gap-2 rounded-xl bg-palette-input px-4 py-3 shadow-soft">
+      {/* 검색창+정렬: 모바일(Figma node 52:384)에서도 한 줄에 나란히 있어서 min-width를 좁게 잡음 */}
+      <div className="mb-4 flex items-center gap-2 md:mb-6 md:gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-palette-input px-3 py-2 shadow-soft md:rounded-xl md:px-4 md:py-3">
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="프로젝트명, 참여자명으로 검색"
-            className="flex-1 bg-transparent text-sm text-black outline-none placeholder:text-palette-muted"
+            className="min-w-0 flex-1 bg-transparent text-xs text-black outline-none placeholder:text-palette-muted md:text-sm"
           />
           <span aria-hidden>🔍</span>
         </div>
@@ -137,7 +141,7 @@ export default function ProjectListPage() {
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as "latest" | "popular")}
-          className="rounded-xl bg-palette-input px-4 py-3 text-sm text-black shadow-soft"
+          className="shrink-0 rounded-lg bg-palette-input px-2 py-2 text-xs text-black shadow-soft md:rounded-xl md:px-4 md:py-3 md:text-sm"
         >
           <option value="latest">최신순</option>
           <option value="popular">인기순</option>
@@ -176,7 +180,7 @@ export default function ProjectListPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
           {projects.map((project) => (
             <ProjectGridCard key={project.id} project={project} />
           ))}
@@ -198,7 +202,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl px-4 py-2 text-sm font-medium ${
+      className={`rounded-lg px-3 py-1.5 text-xs font-medium md:rounded-xl md:px-4 md:py-2 md:text-sm ${
         active ? "bg-palette-accent text-white" : "bg-palette-section text-black"
       }`}
     >
