@@ -57,10 +57,11 @@ export async function verifyCode(email: string, code: string): Promise<void> {
 }
 
 // 소셜로그인: 채흔님이 만들 예정인, /api/login과 비슷한 구조의 엔드포인트를 호출.
+// 구글은 사용 안 하기로 결정해서 카카오/네이버만 지원.
 // TODO: 정확한 경로/요청 필드명은 아직 미확정 - 일단 /api/login/{provider}에
 // { code, redirectUri }를 보내는 걸로 가정해뒀음. 실제 API 스펙 나오면 이 함수만 고치면 됨.
 export async function socialLogin(
-  provider: "google" | "kakao" | "naver",
+  provider: "kakao" | "naver",
   code: string,
   redirectUri: string
 ): Promise<LoginResult> {

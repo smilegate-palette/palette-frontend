@@ -4,8 +4,8 @@ import { socialLogin } from "@/lib/api/auth";
 import { getRedirectUri, verifyOAuthState, OAuthProvider } from "@/lib/auth/oauth";
 import { useAuth } from "@/lib/auth/AuthContext";
 
-// 구글/카카오/네이버 로그인 화면에서 돌아오는 콜백 페이지.
-// URL 예: /auth/callback/google?code=...&state=...
+// 카카오/네이버 로그인 화면에서 돌아오는 콜백 페이지.
+// URL 예: /auth/callback/kakao?code=...&state=...
 export default function SocialCallbackPage() {
   const { provider } = useParams<{ provider: string }>();
   const [searchParams] = useSearchParams();
@@ -15,7 +15,7 @@ export default function SocialCallbackPage() {
 
   useEffect(() => {
     const isValidProvider = (p?: string): p is OAuthProvider =>
-      p === "google" || p === "kakao" || p === "naver";
+      p === "kakao" || p === "naver";
 
     if (!isValidProvider(provider)) {
       setError("알 수 없는 로그인 방식이에요.");

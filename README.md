@@ -55,7 +55,7 @@ src/
 - **Figma 실제 디자인 반영**: 색상 토큰(배경 흰색, 포인트 노란색 `#ffd400`, 카드 `#f7f7f7` 등 `tailwind.config.ts` 참고), 그림자(`shadow-soft`/`shadow-strong`/`shadow-card`), 카드 간격(20px), PROJECT 목록 전용 카드 스타일(`ProjectGridCard`)
 - **로고**: Figma에서 받은 이미지를 흰 배경 투명 처리해서 `public/logo.png`로 적용, 헤더에서 자동 로드
 - **로그인/회원가입(자체 JWT)**: `/api/login`, `/api/signup`(+이메일 인증코드) 연동 완료. 로그인 시 토큰을 localStorage에 저장하고 이후 모든 API 요청에 자동으로 `Authorization: Bearer` 첨부. 401 시 자동 로그아웃 처리
-- **소셜로그인(구글/카카오/네이버) 프론트 구조**: 로그인 버튼, 리다이렉트, 콜백 페이지까지 스캐폴딩 완료. 백엔드 교환 엔드포인트 + 각 제공자 client id만 채워지면 바로 동작 (아래 TODO 참고)
+- **소셜로그인(카카오/네이버) 프론트 구조**: 로그인 버튼, 리다이렉트, 콜백 페이지까지 스캐폴딩 완료. 카카오/네이버 client id는 `.env.local`에 등록 완료. 백엔드 교환 엔드포인트만 완성되면 바로 동작 (아래 TODO 참고). 
 - **실제 백엔드 연동**: PROJECT 목록 조회(`GET /api/project`)가 mock이 아닌 실제 배포 서버(`129.225.197.4:8080`)를 호출. 응답 snake_case → camelCase 매핑(`mapProjectResponse`) 적용
 - **검색/필터**: 연도·프로그램·형태·검색어·정렬 구현 (지역 필터는 요청에 따라 제거 - 지역 정보는 프로젝트 상세 페이지에서만 노출)
 - **댓글, "응원해요" 좋아요, 프로젝트 설명 더보기/접기, 반응형 그리드**: 기본 UI/동작 구현 (백엔드 엔드포인트 없어서 현재는 mock으로 동작)
@@ -75,7 +75,6 @@ src/
 
 - [ ] **`GET /api/project`가 비로그인 상태에서 401이 나는 게 의도한 정책인지** - 원래 HOME/PROJECT 목록은 비로그인도 봐야 하는 공개 화면이라 확인 필요
 - [ ] **소셜로그인 엔드포인트 정확한 스펙** - 지금은 `POST /api/login/{provider}`에 `{ code, redirectUri }`로 가정해서 만들어둠
-- [ ] **구글/카카오/네이버 개발자센터 앱 등록** - client_secret 갖고 있는 백엔드가 등록하는 게 자연스러워 보임. 콜백 URL: `{배포주소}/auth/callback/{google|kakao|naver}`
 - [ ] `ProjectRequest.partipants` 필드 오타 (participants여야 함)
 - [ ] `ProjectRequest.category`가 단일 값인데 기획은 다중 선택 - 확인 필요
 - [ ] 로그인 응답에 `password` 필드 노출 - 보안 이슈 (프론트에서는 저장 안 하고 버림)

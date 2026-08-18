@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { getOAuthLoginUrl, OAuthProvider } from "@/lib/auth/oauth";
 
 const SOCIAL_BUTTONS: { provider: OAuthProvider; label: string }[] = [
-  { provider: "google", label: "구글로 로그인" },
   { provider: "kakao", label: "카카오로 로그인" },
   { provider: "naver", label: "네이버로 로그인" },
 ];

@@ -7,7 +7,6 @@ import { Comment } from "@/lib/types/comment";
 
 export const mockPrograms: ProgramType[] = ["창의워크숍", "유스파티"];
 
-// 기획 문서 기준 지역 예시 (특별시/광역시 외에는 '권역 시' 형태로 기입)
 export const mockRegions = ["서울", "전북 전주", "강원 강릉", "경기 성남", "경기 하남"];
 
 export const mockProjects: Project[] = Array.from({ length: 12 }).map(

@@ -67,7 +67,7 @@ export default function Header() {
           })}
         </nav>
 
-        {/* 자체 JWT 로그인 연결 완료. 소셜로그인(카카오/네이버/구글)은 백엔드에 아직 엔드포인트 없음 */}
+        {/* 자체 JWT 로그인 연결 완료. 소셜로그인(카카오/네이버)은 백엔드에 아직 엔드포인트 없음 (구글은 미사용) */}
         <div className="flex items-center gap-3">
           {isLoggedIn && email && (
             <span className="hidden text-sm text-palette-muted sm:inline">{email}</span>

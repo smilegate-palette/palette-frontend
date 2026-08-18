@@ -1,8 +1,9 @@
-// 소셜로그인(구글/카카오/네이버) 인가 URL 생성 + CSRF 방지용 state 검증.
+// 소셜로그인(카카오/네이버) 인가 URL 생성 + CSRF 방지용 state 검증.
+// 구글은 사용 안 하기로 결정해서 제외함 (2026.08).
 // 실제 로그인 처리는 백엔드가 함(채흔님이 /api/login과 비슷한 구조로 code -> accesstoken 교환 API를 만들 예정) -
 // 프론트는 사용자를 각 제공자 로그인 화면으로 보내고, 돌아왔을 때 code를 백엔드에 넘기는 역할만 함.
 
-export type OAuthProvider = "google" | "kakao" | "naver";
+export type OAuthProvider = "kakao" | "naver";
 
 interface OAuthConfig {
   authorizeUrl: string;
@@ -10,14 +11,9 @@ interface OAuthConfig {
   scope?: string;
 }
 
-// ⚠️ client_id는 각 제공자 개발자센터(Google Cloud Console / Kakao Developers / Naver Developers)에서
+// ⚠️ client_id는 각 제공자 개발자센터(Kakao Developers / Naver Developers)에서
 // 앱 등록 후 발급받는 값. .env.local에 채워넣으면 됨 (client_secret과 달리 공개돼도 안전한 값).
 const OAUTH_CONFIG: Record<OAuthProvider, OAuthConfig> = {
-  google: {
-    authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-    scope: "openid email profile",
-  },
   kakao: {
     authorizeUrl: "https://kauth.kakao.com/oauth/authorize",
     clientId: import.meta.env.VITE_KAKAO_CLIENT_ID,
