@@ -3,9 +3,15 @@ import { Project } from "@/lib/types/project";
 
 // HOME 주제별 큐레이션 그리드에서 쓰는 기본 썸네일 카드 (5열 그리드, 카드 개수만큼 폭 채움)
 // 규격(1:1 vs 3:4)은 디자인 기획 미확정 - 임시로 4:3 사용
-export default function ProjectCard({ project }: { project: Project }) {
+export default function ProjectCard({
+  project,
+  className = "",
+}: {
+  project: Project;
+  className?: string;
+}) {
   return (
-    <Link to={`/project/${project.id}`} className="group block">
+    <Link to={`/project/${project.id}`} className={`group block ${className}`}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-palette-placeholder transition-transform group-hover:scale-[1.02]">
         <img
           src={project.thumbnailUrl}

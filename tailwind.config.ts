@@ -21,6 +21,12 @@ const config: Config = {
           accent: "#ffd400", // 포인트 노란색
         },
       },
+      // Figma 풀스크린 시안(2560px)용 커스텀 브레이크포인트.
+      // 기본 제공 2xl(1536px)은 너무 좁아서 히어로 카드 확대 크기(640/540px)가
+      // 화면 밖으로 넘쳐 가로 스크롤이 생기는 버그가 있었음 - 2000px로 안전하게 올림.
+      screens: {
+        "3xl": "2000px",
+      },
       fontFamily: {
         sans: [
           "Pretendard",

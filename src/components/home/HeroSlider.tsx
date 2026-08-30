@@ -33,7 +33,9 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
 
   return (
     <section
-      className="px-4 py-6 md:px-6 md:py-8"
+      // overflow-x-hidden: 카드 폭 계산이 브레이크포인트랑 안 맞아도 페이지 전체가
+      // 옆으로 밀리지 않고 이 섹션 안에서만 잘리도록 하는 안전장치
+      className="overflow-x-hidden px-4 py-6 md:px-6 md:py-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -88,8 +90,15 @@ function SlideCard({
   size: "small" | "large";
   className?: string;
 }) {
+  // Figma 풀스크린 시안(node 89:2, 2560px)에서는 중앙 카드 360×640, 좌우 카드 304×540으로
+  // 크기 차이가 크지 않아서 3xl(2000px, tailwind.config.ts에 추가한 커스텀 브레이크포인트)
+  // 이상에서 좀 더 크게 키웠습니다. 처음엔 기본 제공 2xl(1536px)을 썼는데, 그 폭에서는
+  // 카드 3개 합친 폭이 화면보다 넓어져서 가로 스크롤이 생기는 버그가 있어서 2000px로 올렸습니다.
+  // (좌우 카드가 화면 밖으로 살짝 걸쳐 보이는 연출까지는 구현 안 함 - 기존에 안내드린 단순화와 동일)
   const dimensions =
-    size === "large" ? "h-44 w-[260px] md:h-72 md:w-[420px]" : "h-56 w-72";
+    size === "large"
+      ? "h-44 w-[260px] md:h-72 md:w-[420px] 3xl:h-[360px] 3xl:w-[640px]"
+      : "h-56 w-72 3xl:h-[304px] 3xl:w-[540px]";
   return (
     <Link
       to={`/project/${project.id}`}

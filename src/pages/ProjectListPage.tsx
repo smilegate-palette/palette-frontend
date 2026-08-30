@@ -180,7 +180,8 @@ export default function ProjectListPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4">
+        // Figma 풀스크린 시안(node 90:272, 2560px)엔 6열로 나와서 3xl(2000px~) 이상에서 6열로 늘림
+        <div className="grid grid-cols-2 gap-3 md:gap-5 lg:grid-cols-4 3xl:grid-cols-6">
           {projects.map((project) => (
             <ProjectGridCard key={project.id} project={project} />
           ))}

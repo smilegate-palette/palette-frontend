@@ -36,8 +36,11 @@ export default function ProjectDetailPage() {
     { label: project.participants?.join(", "), color: "bg-[#3ddc84]" },
   ].filter((item): item is { label: string; color: string } => Boolean(item.label));
 
+  // Figma 풀스크린 시안(node 90:500)을 보니 상세 페이지도 다른 페이지들처럼
+  // 가운데 정렬된 좁은 컬럼이 아니라 좌우 여백만 있고 화면 끝까지 꽉 채우는 레이아웃이라
+  // (이전엔 max-w-4xl로 좁게 구현했었는데) 목록/홈 페이지와 동일한 패딩 방식으로 맞췄습니다.
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 md:px-6 md:py-8">
+    <div className="px-4 py-6 md:px-6 md:py-8">
       <div className="mb-3 flex flex-wrap gap-2">
         <MetaChip label={project.program} />
         <MetaChip label={String(project.year)} />
