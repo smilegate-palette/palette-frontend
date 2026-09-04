@@ -63,14 +63,15 @@ export async function verifyCode(email: string, code: string): Promise<void> {
 export async function socialLogin(
   provider: "kakao" | "naver",
   code: string,
-  redirectUri: string
+  state?: string
 ): Promise<LoginResult> {
   const res = await apiFetch<{ email: string; accesstoken: string }>(
-    `/api/login/${provider}`,
+    `/api/${provider}/callback`,
     {
       method: "POST",
-      body: JSON.stringify({ code, redirectUri }),
+      body: JSON.stringify({ code, state }),
     }
   );
   return res;
 }
+

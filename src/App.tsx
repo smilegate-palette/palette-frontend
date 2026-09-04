@@ -12,6 +12,9 @@ import SocialCallbackPage from "@/pages/SocialCallbackPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 export default function App() {
+
+  console.log('USE_MOCK 원본값:', import.meta.env.VITE_USE_MOCK);
+  console.log('USE_MOCK 결과:', import.meta.env.VITE_USE_MOCK !== "false");
   return (
     <Routes>
       <Route element={<Layout />}>
