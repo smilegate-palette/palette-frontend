@@ -33,7 +33,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const result = await login({ email, password });
-      applySession(result.accesstoken, result.email);
+      applySession(result.accesstoken, result.email, result.userId);
       navigate("/");
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {

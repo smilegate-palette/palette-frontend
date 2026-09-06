@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { getToken, getStoredEmail, setSession, clearSession } from "./token";
+import { getToken, getStoredEmail, getStoredUserId, setSession, clearSession } from "./token";
 
 interface AuthState {
   isLoggedIn: boolean;
   email: string | null;
-  login: (token: string, email: string) => void;
+  userId: string | null;
+  login: (token: string, email: string, userId?: string) => void;
   logout: () => void;
 }
 
@@ -14,21 +15,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 새로고침 시에도 localStorage에서 세션을 복구
   const [token, setToken] = useState<string | null>(() => getToken());
   const [email, setEmail] = useState<string | null>(() => getStoredEmail());
+  const [userId, setUserId] = useState<string | null>(() => getStoredUserId());
 
-  const login = (newToken: string, newEmail: string) => {
-    setSession(newToken, newEmail);
+  const login = (newToken: string, newEmail: string, newUserId?: string) => {
+    setSession(newToken, newEmail, newUserId);
     setToken(newToken);
     setEmail(newEmail);
+    setUserId(newUserId ?? null);
   };
 
   const logout = () => {
     clearSession();
     setToken(null);
     setEmail(null);
+    setUserId(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn: !!token, email, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: !!token, email, userId, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

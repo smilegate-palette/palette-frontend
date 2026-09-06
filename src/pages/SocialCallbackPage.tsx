@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { socialLogin } from "@/lib/api/auth";
-import { getRedirectUri, verifyOAuthState, OAuthProvider } from "@/lib/auth/oauth";
+import { verifyOAuthState, OAuthProvider } from "@/lib/auth/oauth";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // 카카오/네이버 로그인 화면에서 돌아오는 콜백 페이지.
@@ -35,9 +35,9 @@ export default function SocialCallbackPage() {
       return;
     }
 
-    socialLogin(provider, code, getRedirectUri(provider))
+    socialLogin(provider, code, state ?? undefined)
       .then((res) => {
-        applySession(res.accesstoken, res.email);
+        applySession(res.accesstoken, res.email, res.userId);
         navigate("/");
       })
       .catch(() => setError("소셜 로그인에 실패했어요. 잠시 후 다시 시도해주세요."));

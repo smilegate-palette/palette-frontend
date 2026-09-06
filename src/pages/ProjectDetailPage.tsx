@@ -3,6 +3,7 @@ import LikeButton from "@/components/project/LikeButton";
 import { useParams } from "react-router-dom";
 import { getProjectDetail } from "@/lib/api/projects";
 import { getComments } from "@/lib/api/comments";
+import { ApiError } from "@/lib/api/client";
 import { Project } from "@/lib/types/project";
 import { Comment } from "@/lib/types/comment";
 import CommentSection from "@/components/project/CommentSection";
@@ -12,17 +13,35 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [project, setProject] = useState<Project | undefined | null>(null); // null = 로딩중
   const [comments, setComments] = useState<Comment[]>([]);
+  // PROJECT 목록처럼 비로그인 상태에서 401/403이 날 수 있어서 별도로 구분해서 안내
+  const [authError, setAuthError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    getProjectDetail(id).then((data) => {
-      setProject(data ?? undefined);
-      if (data) getComments(data.id).then(setComments);
-    });
+    setProject(null);
+    setAuthError(false);
+    getProjectDetail(id)
+      .then((data) => {
+        setProject(data ?? undefined);
+        if (data) getComments(data.id).then(setComments).catch(() => setComments([]));
+      })
+      .catch((err) => {
+        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          setAuthError(true);
+        }
+        setProject(undefined);
+      });
   }, [id]);
 
   if (project === null) {
     return <p className="px-6 py-8 text-sm text-palette-muted">불러오는 중...</p>;
+  }
+  if (authError) {
+    return (
+      <p className="px-6 py-8 text-sm text-palette-muted">
+        로그인 후 이용할 수 있는 페이지예요. 로그인하고 다시 시도해주세요.
+      </p>
+    );
   }
   if (project === undefined) {
     return <NotFoundPage />;
@@ -50,7 +69,7 @@ export default function ProjectDetailPage() {
       <div className="mb-2 flex items-center justify-between gap-3">
         <h1 className="text-lg font-bold md:text-3xl">{project.title}</h1>
         {/* "응원해요" 좋아요 기능 - 기획 문서에서 요청됨, API 스펙 미정이라 로컬 state로만 우선 구현 */}
-        <LikeButton initialCount={project.likeCount ?? 0} />
+        <LikeButton projectId={project.id} initialCount={project.likeCount ?? 0} />
       </div>
 
       {metaLegend.length > 0 && (

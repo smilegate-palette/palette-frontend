@@ -7,6 +7,8 @@ import { apiFetch } from "./client";
 //   POST /api/signup/verification email/code -> 인증코드 확인
 // ⚠️ /api/login 응답에 password 필드가 그대로 내려옴(보안 이슈, 백엔드에 이미 전달함) - 프론트에서는 절대 저장 안 함.
 // ⚠️ role은 "USER"|"ADMIN" enum인데, 일반 회원가입 폼에서는 항상 USER로 고정해서 보냄.
+// 2026.08.11 백엔드가 로그인 응답에 user_id를 추가함 (프로젝트 등록 등에 필요했던 값).
+// ⚠️ 필드명이 정확히 "user_id"인지는 확인 요청 중 - 다르면 이 매핑만 고치면 됨.
 
 export interface LoginPayload {
   email: string;
@@ -16,17 +18,24 @@ export interface LoginPayload {
 export interface LoginResult {
   email: string;
   accesstoken: string;
+  userId?: string;
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResult> {
-  const res = await apiFetch<{ email: string; password: string; accesstoken: string }>(
-    "/api/login",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }
-  );
-  return { email: res.email, accesstoken: res.accesstoken };
+  const res = await apiFetch<{
+    email: string;
+    password: string;
+    accesstoken: string;
+    user_id?: string | number;
+  }>("/api/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return {
+    email: res.email,
+    accesstoken: res.accesstoken,
+    userId: res.user_id !== undefined ? String(res.user_id) : undefined,
+  };
 }
 
 export interface SignupPayload {
@@ -56,21 +65,25 @@ export async function verifyCode(email: string, code: string): Promise<void> {
   });
 }
 
-// 소셜로그인: 채흔님이 만들 예정인, /api/login과 비슷한 구조의 엔드포인트를 호출.
-// 구글은 사용 안 하기로 결정해서 카카오/네이버만 지원.
-// TODO: 정확한 경로/요청 필드명은 아직 미확정 - 일단 /api/login/{provider}에
-// { code, redirectUri }를 보내는 걸로 가정해뒀음. 실제 API 스펙 나오면 이 함수만 고치면 됨.
+// 소셜로그인: 채흔님이 만든 콜백 엔드포인트 호출. 구글은 사용 안 하기로 결정해서 카카오/네이버만 지원.
+// 2026.09.06 실제 배포된 Swagger로 재확인함: 경로에 별도 컨트롤러 base path 없이
+// POST /api/{provider}/callback 그대로였음 (이전에 "{controller-base-path}" placeholder를
+// 넣어뒀던 건 잘못된 가정이었음 - 이번에 실제 스펙 보고 바로잡음).
 export async function socialLogin(
   provider: "kakao" | "naver",
   code: string,
-  redirectUri: string
+  state?: string
 ): Promise<LoginResult> {
-  const res = await apiFetch<{ email: string; accesstoken: string }>(
-    `/api/login/${provider}`,
+  const res = await apiFetch<{ email: string; accesstoken: string; user_id?: string | number }>(
+    `/api/${provider}/callback`,
     {
       method: "POST",
-      body: JSON.stringify({ code, redirectUri }),
+      body: JSON.stringify({ code, state }),
     }
   );
-  return res;
+  return {
+    email: res.email,
+    accesstoken: res.accesstoken,
+    userId: res.user_id !== undefined ? String(res.user_id) : undefined,
+  };
 }

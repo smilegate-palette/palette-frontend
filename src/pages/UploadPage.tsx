@@ -2,7 +2,7 @@ import { FormEvent, KeyboardEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { createProject } from "@/lib/api/projects";
-import { ProgramType } from "@/lib/types/project";
+import { ProgramType, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
 
 // Figma(node 60:2 데스크탑 / 63:343 모바일 "PROJECT 업로드 폼") 기준.
 // 5단계(기본 정보/참여자 정보/프로젝트 설명/미디어 업로드/완료)가 실제로는 한 페이지에
@@ -20,8 +20,9 @@ export default function UploadPage() {
   const [program, setProgram] = useState<ProgramType | "">("");
   const [year, setYear] = useState(new Date().getFullYear());
   const [title, setTitle] = useState("");
-  const [typeInput, setTypeInput] = useState("");
-  const [types, setTypes] = useState<string[]>([]);
+  // 2026.09.06 백엔드 category가 고정 enum이라, Figma 시안의 자유 태그 입력 대신
+  // 처음 설계했던 enum 기반 드롭다운 단일 선택으로 되돌림 (PROJECT_TYPES 참고)
+  const [category, setCategory] = useState<ProjectType | "">("");
   const [region, setRegion] = useState("");
   const [organization, setOrganization] = useState("");
   const [participantInput, setParticipantInput] = useState("");
@@ -72,8 +73,8 @@ export default function UploadPage() {
     e.preventDefault();
     setError(null);
 
-    if (!program || !title.trim() || description.trim().length < 50) {
-      setError("필수 항목을 확인해주세요. (프로젝트명, 프로그램, 50자 이상 프로젝트 설명은 꼭 입력해야 해요)");
+    if (!program || !title.trim() || !category || description.trim().length < 50) {
+      setError("필수 항목을 확인해주세요. (프로젝트명, 프로그램, 유형, 50자 이상 프로젝트 설명은 꼭 입력해야 해요)");
       return;
     }
 
@@ -83,7 +84,7 @@ export default function UploadPage() {
         program,
         year,
         title,
-        types,
+        category,
         region: region || undefined,
         organization: organization || undefined,
         participants,
@@ -91,11 +92,13 @@ export default function UploadPage() {
         mediaUrl: mediaType === "video" ? videoUrl : mediaType === "link" ? webLink : undefined,
       });
       navigate("/project");
-    } catch {
-      // TODO: 로그인 응답에 user_id가 없어서 등록 API(POST /api/project/{user_id}) 경로를
-      // 정확히 만들 수가 없는 상태입니다(README 참고). user_id 확보되면 실제 등록이 될 거예요.
+    } catch (err) {
+      // 2026.08.11 백엔드가 로그인 응답에 user_id를 내려주기 시작해서 실제 등록 연동이 가능해짐.
+      // user_id를 못 찾은 경우엔 createProject가 안내 메시지가 담긴 Error를 던짐 - 그대로 보여줌.
       setError(
-        "업로드에 실패했어요. 백엔드에서 로그인 응답에 user_id를 아직 안 내려줘서, 실제 등록 연동은 확인이 더 필요한 상태예요."
+        err instanceof Error
+          ? err.message
+          : "업로드에 실패했어요. 잠시 후 다시 시도해주세요."
       );
     } finally {
       setSubmitting(false);
@@ -164,17 +167,21 @@ export default function UploadPage() {
                 className={inputClass}
               />
             </Field>
-            <Field label="유형 입력">
-              <input
-                value={typeInput}
-                onChange={(e) => setTypeInput(e.target.value)}
-                onKeyDown={(e) => addTag(e, typeInput, setTypeInput, types, setTypes)}
-                placeholder="프로젝트 유형 입력 후 엔터"
+            <Field label="유형">
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as ProjectType)}
                 className={inputClass}
-              />
+              >
+                <option value="">유형 선택</option>
+                {PROJECT_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
-          <TagList items={types} onRemove={(i) => setTypes(types.filter((_, idx) => idx !== i))} />
         </section>
 
         {/* 2. 참여자 정보 */}

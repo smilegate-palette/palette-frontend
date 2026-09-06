@@ -82,6 +82,16 @@ export default function Header() {
 
         {/* 자체 JWT 로그인 연결 완료. 소셜로그인(카카오/네이버)은 백엔드에 아직 엔드포인트 없음 (구글은 미사용) */}
         <div className="flex items-center gap-3">
+          {/* 관리자 링크: 로그인 응답에 role 정보가 없어서 일반/관리자 계정을 구분 못 함 -
+              일단 로그인만 되어 있으면 보이게 해두고, 실제 권한 체크는 AdminPage에서 API 401/403으로 처리함 */}
+          {isLoggedIn && (
+            <Link
+              to="/admin"
+              className="hidden text-sm font-medium text-palette-muted hover:text-black sm:inline"
+            >
+              관리자
+            </Link>
+          )}
           {isLoggedIn && email && (
             <span className="hidden text-sm text-palette-muted sm:inline">{email}</span>
           )}
@@ -135,6 +145,15 @@ export default function Header() {
                 </Link>
               );
             })}
+            {isLoggedIn && (
+              <Link
+                to="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="border-b border-palette-border px-4 py-4 text-base font-medium text-black"
+              >
+                관리자
+              </Link>
+            )}
             {isLoggedIn && (
               <button
                 onClick={handleAuthClick}

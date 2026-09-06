@@ -22,6 +22,10 @@ export const PROJECT_TYPES = [
 ] as const;
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
+// 2026.09 백엔드 ProjectRequest.status 기준 (관리자 승인/반려/비공개 플로우용)
+export const PROJECT_STATUSES = ["PENDING", "APPROVED", "REJECTED", "HIDDEN"] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
 export interface Project {
   id: string;
   title: string; // 프로젝트 이름
@@ -39,6 +43,8 @@ export interface Project {
   isFeatured?: boolean; // 홈 히어로 슬라이더 노출 여부 (2026년 11개 기관 프로젝트)
   curationTags?: string[]; // 홈 주제별 큐레이션 세션 매칭용 태그
   createdAt?: string;
+  status?: ProjectStatus; // 관리자 승인/반려/비공개 상태
+  rejectReason?: string;
 }
 
 export interface ProjectListParams {
