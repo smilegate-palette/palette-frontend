@@ -73,3 +73,59 @@ export async function rejectProject(
     body: JSON.stringify({ reject_reason: rejectReason }),
   });
 }
+
+// 관리자 프로젝트 직접 수정. Figma 관리자 시안(node 92:2)엔 프로젝트명/유형/설명/썸네일/추가 필드까지
+// 있는데, 썸네일 업로드·추가 필드는 이걸 저장할 백엔드 필드/엔드포인트가 없어서 화면만 만들고
+// 실제로 저장은 안 되게 해뒀습니다 (AdminPage 참고). 여기선 실제로 보낼 수 있는 필드만 받습니다.
+export async function updateAdminProject(
+  userId: string,
+  projectId: string,
+  payload: { title: string; category: string; description: string }
+): Promise<void> {
+  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/${projectId}`, {
+    method: "PATCH",
+    body: JSON.stringify({
+      project_title: payload.title,
+      category: payload.category,
+      description: payload.description,
+    }),
+  });
+}
+
+// HOME 큐레이션 섹션 순서 관리. 응답 스키마가 Swagger에 제네릭 object라 실제 필드명은 추정치입니다 -
+// 실제 데이터로 확인 전까지는 화면에 아무것도 안 뜰 수 있어요.
+export interface CurationSection {
+  sectionId: number;
+  title: string;
+  projectIds: number[];
+}
+
+function extractSections(raw: unknown): CurationSection[] {
+  const list = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === "object"
+    ? (raw as Record<string, unknown>).sections ?? (raw as Record<string, unknown>).curations
+    : [];
+  if (!Array.isArray(list)) return [];
+  return (list as Record<string, unknown>[]).map((s) => ({
+    sectionId: Number(s.section_id ?? s.sectionId ?? 0),
+    title: (s.title as string) ?? (s.name as string) ?? "",
+    projectIds: ((s.project_ids ?? s.projectIds ?? []) as (number | string)[]).map(Number),
+  }));
+}
+
+export async function getCuration(userId: string): Promise<CurationSection[]> {
+  const raw = await apiFetch<unknown>(`/api/admin/${encodeURIComponent(userId)}/curation`);
+  return extractSections(raw);
+}
+
+export async function saveCurationOrder(
+  userId: string,
+  sectionId: number,
+  projectIds: number[]
+): Promise<void> {
+  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/curation`, {
+    method: "POST",
+    body: JSON.stringify({ section_id: sectionId, projectIds }),
+  });
+}
