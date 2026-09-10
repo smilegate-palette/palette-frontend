@@ -2,6 +2,7 @@
 const TOKEN_KEY = "palette_access_token";
 const EMAIL_KEY = "palette_user_email";
 const USER_ID_KEY = "palette_user_id";
+const ROLE_KEY = "palette_user_role";
 
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
@@ -17,7 +18,11 @@ export function getStoredUserId(): string | null {
   return localStorage.getItem(USER_ID_KEY);
 }
 
-export function setSession(token: string, email: string, userId?: string) {
+export function getStoredRole(): string | null {
+  return localStorage.getItem(ROLE_KEY);
+}
+
+export function setSession(token: string, email: string, userId?: string, role?: string) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(EMAIL_KEY, email);
   if (userId) {
@@ -25,10 +30,16 @@ export function setSession(token: string, email: string, userId?: string) {
   } else {
     localStorage.removeItem(USER_ID_KEY);
   }
+  if (role) {
+    localStorage.setItem(ROLE_KEY, role);
+  } else {
+    localStorage.removeItem(ROLE_KEY);
+  }
 }
 
 export function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(EMAIL_KEY);
   localStorage.removeItem(USER_ID_KEY);
+  localStorage.removeItem(ROLE_KEY);
 }

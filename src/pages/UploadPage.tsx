@@ -32,9 +32,11 @@ export default function UploadPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [webLink, setWebLink] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeStep, setActiveStep] = useState(0);
 
   if (!isLoggedIn) {
     return (
@@ -66,6 +68,7 @@ export default function UploadPage() {
 
   const handleThumbnailChange = (file: File | undefined) => {
     if (!file) return;
+    setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
   };
 
@@ -77,9 +80,10 @@ export default function UploadPage() {
       setError("필수 항목을 확인해주세요. (프로젝트명, 프로그램, 유형, 50자 이상 프로젝트 설명은 꼭 입력해야 해요)");
       return;
     }
-
     setSubmitting(true);
     try {
+      // 파일 저장과 URL 변환은 백엔드에서 처리한다. 프론트는 선택한 파일을 data URL로 전달한다.
+      const thumbnailUrl = thumbnailFile ? await fileToDataUrl(thumbnailFile) : undefined;
       await createProject({
         program,
         year,
@@ -90,6 +94,7 @@ export default function UploadPage() {
         participants,
         description,
         mediaUrl: mediaType === "video" ? videoUrl : mediaType === "link" ? webLink : undefined,
+        thumbnailUrl,
       });
       navigate("/project");
     } catch (err) {
@@ -114,28 +119,34 @@ export default function UploadPage() {
             <div className="flex flex-col items-center gap-1">
               <span
                 className={`flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white md:size-8 md:text-sm ${
-                  i === 0 ? "bg-palette-accent" : "bg-palette-placeholder"
+                  i <= activeStep ? "bg-palette-accent" : "bg-palette-placeholder"
                 }`}
               >
                 {i + 1}
               </span>
               <span
                 className={`text-[9px] md:text-sm ${
-                  i === 0 ? "font-bold text-palette-accent" : "text-palette-placeholder"
+                  i <= activeStep ? "font-bold text-palette-accent" : "text-palette-placeholder"
                 }`}
               >
                 {step}
               </span>
             </div>
-            {i < STEPS.length - 1 && <div className="mx-1 h-px flex-1 bg-palette-border md:mx-2" />}
+            {i < STEPS.length - 1 && (
+              <div
+                className={`mx-1 h-px flex-1 md:mx-2 ${
+                  i < activeStep ? "bg-palette-accent" : "bg-palette-border"
+                }`}
+              />
+            )}
           </div>
         ))}
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-8 md:gap-12">
         {/* 1. 기본 정보 */}
-        <section>
-          <SectionHeading n={1} title="기본 정보" active />
+        <section onFocusCapture={() => setActiveStep(0)}>
+          <SectionHeading n={1} title="기본 정보" active={activeStep === 0} />
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             <Field label="프로그램">
               <select
@@ -185,8 +196,8 @@ export default function UploadPage() {
         </section>
 
         {/* 2. 참여자 정보 */}
-        <section>
-          <SectionHeading n={2} title="참여자 정보" />
+        <section onFocusCapture={() => setActiveStep(1)}>
+          <SectionHeading n={2} title="참여자 정보" active={activeStep === 1} />
           <div className="grid grid-cols-2 gap-3 md:gap-4">
             <Field label="지역">
               <input
@@ -225,8 +236,8 @@ export default function UploadPage() {
         </section>
 
         {/* 3. 프로젝트 설명 */}
-        <section>
-          <SectionHeading n={3} title="프로젝트 설명" />
+        <section onFocusCapture={() => setActiveStep(2)}>
+          <SectionHeading n={3} title="프로젝트 설명" active={activeStep === 2} />
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -237,8 +248,8 @@ export default function UploadPage() {
         </section>
 
         {/* 4. 미디어 업로드 */}
-        <section>
-          <SectionHeading n={4} title="미디어 업로드" />
+        <section onFocusCapture={() => setActiveStep(3)}>
+          <SectionHeading n={4} title="미디어 업로드" active={activeStep === 3} />
           {/* Figma 시안엔 세 방식이 동시에 다 보이는데, 실제로는 값이 하나만 저장되는 필드(media_url)라
               탭처럼 하나만 선택해서 입력하는 방식으로 구현했습니다. */}
           <div className="mb-3 flex gap-2">
@@ -313,8 +324,11 @@ export default function UploadPage() {
         </section>
 
         {/* 5. 완료 */}
-        <section className="flex flex-col items-center gap-4 text-center">
-          <SectionHeading n={5} title="완료" />
+        <section
+          className="flex flex-col items-center gap-4 text-center"
+          onFocusCapture={() => setActiveStep(4)}
+        >
+          <SectionHeading n={5} title="완료" active={activeStep === 4} />
           <p className="text-sm text-palette-muted md:text-base">
             작성하신 내용을 다시 한번 확인한 후 하단의 [업로드] 버튼을 눌러주세요.
           </p>
@@ -330,6 +344,15 @@ export default function UploadPage() {
       </form>
     </div>
   );
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("썸네일 파일을 읽지 못했습니다. 다시 선택해 주세요."));
+    reader.readAsDataURL(file);
+  });
 }
 
 const inputClass =

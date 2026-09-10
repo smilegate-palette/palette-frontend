@@ -24,3 +24,8 @@ npm-debug.log*
 *.local
 .vercel
 .env*
+
+# TypeScript build artifacts (accidentally committed once, should never be tracked)
+*.tsbuildinfo
+vite.config.js
+vite.config.d.ts

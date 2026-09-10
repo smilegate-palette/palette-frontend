@@ -19,6 +19,7 @@ export interface LoginResult {
   email: string;
   accesstoken: string;
   userId?: string;
+  role?: string;
 }
 
 export async function login(payload: LoginPayload): Promise<LoginResult> {
@@ -27,6 +28,7 @@ export async function login(payload: LoginPayload): Promise<LoginResult> {
     password: string;
     accesstoken: string;
     user_id?: string | number;
+    role?: string;
   }>("/api/login", {
     method: "POST",
     body: JSON.stringify(payload),
@@ -35,6 +37,7 @@ export async function login(payload: LoginPayload): Promise<LoginResult> {
     email: res.email,
     accesstoken: res.accesstoken,
     userId: res.user_id !== undefined ? String(res.user_id) : undefined,
+    role: res.role,
   };
 }
 
@@ -74,7 +77,12 @@ export async function socialLogin(
   code: string,
   state?: string
 ): Promise<LoginResult> {
-  const res = await apiFetch<{ email: string; accesstoken: string; user_id?: string | number }>(
+  const res = await apiFetch<{
+    email: string;
+    accesstoken: string;
+    user_id?: string | number;
+    role?: string;
+  }>(
     `/api/${provider}/callback`,
     {
       method: "POST",
@@ -85,6 +93,7 @@ export async function socialLogin(
     email: res.email,
     accesstoken: res.accesstoken,
     userId: res.user_id !== undefined ? String(res.user_id) : undefined,
+    role: res.role,
   };
 }
 

@@ -43,8 +43,8 @@ const STAT_CARDS: {
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const { isLoggedIn, userId } = useAuth();
-
+  const { isLoggedIn, userId, role } = useAuth();
+  const isAdmin = role === "ADMIN";
   const [projects, setProjects] = useState<Project[] | null>(null); // null = 로딩중
   const [error, setError] = useState<string | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -91,11 +91,11 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!isLoggedIn || !userId) return;
+    if (!isLoggedIn || !isAdmin || !userId) return;
     load(userId);
     loadCuration(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn, isAdmin, userId]);
 
   const pendingCount = projects?.filter((p) => (p.status ?? "PENDING") === "PENDING").length ?? 0;
   const totalCount = projects?.length ?? 0;
@@ -197,6 +197,14 @@ export default function AdminPage() {
         >
           로그인하러 가기
         </button>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto max-w-sm px-4 py-16 text-center">
+        <p className="text-sm text-palette-muted">관리자만 이용할 수 있는 페이지예요.</p>
       </div>
     );
   }

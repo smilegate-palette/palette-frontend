@@ -1,20 +1,50 @@
 import { useEffect, useState } from "react";
 import LikeButton from "@/components/project/LikeButton";
-import { useParams } from "react-router-dom";
-import { getProjectDetail } from "@/lib/api/projects";
+import { useNavigate, useParams } from "react-router-dom";
+import { deleteProject, getProjectDetail, updateProject } from "@/lib/api/projects";
 import { getComments } from "@/lib/api/comments";
 import { ApiError } from "@/lib/api/client";
 import { Project } from "@/lib/types/project";
 import { Comment } from "@/lib/types/comment";
 import CommentSection from "@/components/project/CommentSection";
 import NotFoundPage from "./NotFoundPage";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { userId } = useAuth();
   const [project, setProject] = useState<Project | undefined | null>(null); // null = 로딩중
   const [comments, setComments] = useState<Comment[]>([]);
   // PROJECT 목록처럼 비로그인 상태에서 401/403이 날 수 있어서 별도로 구분해서 안내
   const [authError, setAuthError] = useState(false);
+
+  const isOwner = Boolean(project?.ownerId && project.ownerId === userId);
+
+  const handleEdit = async () => {
+    if (!project) return;
+    const title = window.prompt("프로젝트명을 수정해주세요.", project.title)?.trim();
+    if (!title) return;
+    const description = window.prompt("프로젝트 설명을 수정해주세요.", project.description ?? "")?.trim();
+    if (!description) return;
+    try {
+      await updateProject(project.id, { title, description });
+      setProject({ ...project, title, description });
+    } catch (err) {
+      setAuthError(false);
+      window.alert(err instanceof Error ? err.message : "프로젝트 수정에 실패했어요.");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!project || !window.confirm("프로젝트를 삭제할까요?")) return;
+    try {
+      await deleteProject(project.id);
+      navigate("/project");
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "프로젝트 삭제에 실패했어요.");
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -68,8 +98,25 @@ export default function ProjectDetailPage() {
 
       <div className="mb-2 flex items-center justify-between gap-3">
         <h1 className="text-lg font-bold md:text-3xl">{project.title}</h1>
-        {/* "응원해요" 좋아요 기능 - 기획 문서에서 요청됨, API 스펙 미정이라 로컬 state로만 우선 구현 */}
-        <LikeButton projectId={project.id} initialCount={project.likeCount ?? 0} />
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <>
+              <button
+                onClick={handleEdit}
+                className="rounded-lg border border-palette-border px-2.5 py-1.5 text-xs text-palette-muted"
+              >
+                수정
+              </button>
+              <button
+                onClick={handleDelete}
+                className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-500"
+              >
+                삭제
+              </button>
+            </>
+          )}
+          <LikeButton projectId={project.id} initialCount={project.likeCount ?? 0} />
+        </div>
       </div>
 
       {metaLegend.length > 0 && (
@@ -86,9 +133,9 @@ export default function ProjectDetailPage() {
       {/* TODO: 미디어 영역 - 컴포넌트 명세 기준 YouTube/Vimeo 임베드, 파일 업로드 영상,
           웹 링크(iframe), 이미지 갤러리(슬라이더)를 업로드 유형에 따라 다르게 렌더링해야 함.
           지금은 이미지 1장만 처리. 업로드 폼 만들 때 같이 확장 필요. */}
-      <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-palette-placeholder md:rounded-2xl">
+      <div className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-lg bg-palette-placeholder md:rounded-2xl">
         <img
-          src={project.mediaUrl ?? project.thumbnailUrl}
+          src={project.thumbnailUrl || project.mediaUrl}
           alt={project.title}
           className="h-full w-full object-cover"
         />

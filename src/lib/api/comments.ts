@@ -18,6 +18,14 @@ function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Co
   return {
     id: String(raw.id ?? raw.comment_id ?? `comment-${Date.now()}`),
     projectId,
+    authorId: String(
+      raw.user_id ??
+        raw.userId ??
+        raw.author_id ??
+        raw.authorId ??
+        (raw.user as Record<string, unknown> | undefined)?.id ??
+        ""
+    ) || undefined,
     authorName: (raw.nickname as string) ?? (raw.author_name as string) ?? "익명",
     content: (raw.content as string) ?? "",
     createdAt: (raw.created_at as string) ?? new Date().toISOString(),
@@ -43,6 +51,7 @@ export async function createComment(
       id: `comment-${Date.now()}`,
       projectId: payload.projectId,
       authorName: payload.authorName ?? "익명",
+      authorId: getStoredUserId() ?? undefined,
       content: payload.content,
       createdAt: new Date().toISOString(),
       status: "approved",
@@ -71,4 +80,40 @@ export async function createComment(
     authorName: mapped.authorName !== "익명" ? mapped.authorName : payload.authorName ?? "익명",
     content: mapped.content || payload.content,
   };
+}
+
+export async function updateComment(
+  projectId: string,
+  commentId: string,
+  content: string
+): Promise<void> {
+  const userId = getStoredUserId();
+  if (!userId) throw new Error("로그인 후 댓글을 수정할 수 있어요.");
+
+  if (USE_MOCK) {
+    const comment = mockComments.find((item) => item.id === commentId);
+    if (comment) comment.content = content;
+    return;
+  }
+
+  await apiFetch<void>(
+    `/api/comment/${encodeURIComponent(projectId)}/${encodeURIComponent(userId)}/${encodeURIComponent(commentId)}`,
+    { method: "PATCH", body: JSON.stringify({ content }) }
+  );
+}
+
+export async function deleteComment(projectId: string, commentId: string): Promise<void> {
+  const userId = getStoredUserId();
+  if (!userId) throw new Error("로그인 후 댓글을 삭제할 수 있어요.");
+
+  if (USE_MOCK) {
+    const index = mockComments.findIndex((item) => item.id === commentId);
+    if (index >= 0) mockComments.splice(index, 1);
+    return;
+  }
+
+  await apiFetch<void>(
+    `/api/comment/${encodeURIComponent(projectId)}/${encodeURIComponent(userId)}/${encodeURIComponent(commentId)}`,
+    { method: "DELETE" }
+  );
 }

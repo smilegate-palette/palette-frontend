@@ -1,11 +1,19 @@
 import { createContext, useContext, useState, ReactNode } from "react";
-import { getToken, getStoredEmail, getStoredUserId, setSession, clearSession } from "./token";
+import {
+  getToken,
+  getStoredEmail,
+  getStoredRole,
+  getStoredUserId,
+  setSession,
+  clearSession,
+} from "./token";
 
 interface AuthState {
   isLoggedIn: boolean;
   email: string | null;
   userId: string | null;
-  login: (token: string, email: string, userId?: string) => void;
+  role: string | null;
+  login: (token: string, email: string, userId?: string, role?: string) => void;
   logout: () => void;
 }
 
@@ -16,12 +24,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => getToken());
   const [email, setEmail] = useState<string | null>(() => getStoredEmail());
   const [userId, setUserId] = useState<string | null>(() => getStoredUserId());
+  const [role, setRole] = useState<string | null>(() => getStoredRole());
 
-  const login = (newToken: string, newEmail: string, newUserId?: string) => {
-    setSession(newToken, newEmail, newUserId);
+  const login = (newToken: string, newEmail: string, newUserId?: string, newRole?: string) => {
+    setSession(newToken, newEmail, newUserId, newRole);
     setToken(newToken);
     setEmail(newEmail);
     setUserId(newUserId ?? null);
+    setRole(newRole ?? null);
   };
 
   const logout = () => {
@@ -29,10 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setEmail(null);
     setUserId(null);
+    setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn: !!token, email, userId, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: !!token, email, userId, role, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
