@@ -33,6 +33,15 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
 
   return {
     id: String(raw.id ?? raw.project_id ?? raw.projectId ?? raw.projectID ?? ""),
+    ownerId: String(
+      raw.user_id ??
+        raw.userId ??
+        raw.owner_id ??
+        raw.ownerId ??
+        raw.author_id ??
+        (raw.user as Record<string, unknown> | undefined)?.id ??
+        ""
+    ) || undefined,
     title: (raw.project_title as string) ?? "",
     program: (raw.program_name as Project["program"]) ?? "창의워크숍",
     types: raw.category ? [raw.category as Project["types"][number]] : [],
@@ -170,6 +179,50 @@ export async function createProject(payload: CreateProjectPayload): Promise<void
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export async function updateProject(
+  projectId: string,
+  payload: { title: string; description: string }
+): Promise<void> {
+  const userId = getStoredUserId();
+  if (!userId) throw new Error("로그인 후 프로젝트를 수정할 수 있어요.");
+
+  if (USE_MOCK) {
+    const project = mockProjects.find((item) => item.id === projectId);
+    if (project) {
+      project.title = payload.title;
+      project.description = payload.description;
+    }
+    return;
+  }
+
+  await apiFetch<void>(
+    `/api/project/${encodeURIComponent(userId)}/${encodeURIComponent(projectId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        project_title: payload.title,
+        description: payload.description,
+      }),
+    }
+  );
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+  const userId = getStoredUserId();
+  if (!userId) throw new Error("로그인 후 프로젝트를 삭제할 수 있어요.");
+
+  if (USE_MOCK) {
+    const index = mockProjects.findIndex((item) => item.id === projectId);
+    if (index >= 0) mockProjects.splice(index, 1);
+    return;
+  }
+
+  await apiFetch<void>(
+    `/api/project/${encodeURIComponent(userId)}/${encodeURIComponent(projectId)}`,
+    { method: "DELETE" }
+  );
 }
 
 // 2026.09.06 신규: "응원해요" 좋아요 등록/취소. 서버에 "내가 이미 눌렀는지" 조회하는 API가

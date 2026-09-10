@@ -14,7 +14,8 @@ import { Project } from "@/lib/types/project";
 // 드래그 앤 드롭 등 별도 UI가 필요해서 승인/반려 플로우부터 먼저 만들었어요.
 export default function AdminPage() {
   const navigate = useNavigate();
-  const { isLoggedIn, userId } = useAuth();
+  const { isLoggedIn, userId, role } = useAuth();
+  const isAdmin = role === "ADMIN";
   const [projects, setProjects] = useState<Project[] | null>(null); // null = 로딩중
   const [error, setError] = useState<string | null>(null);
   const [actioningId, setActioningId] = useState<string | null>(null);
@@ -39,10 +40,10 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!isLoggedIn || !userId) return;
+    if (!isLoggedIn || !isAdmin || !userId) return;
     load(userId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, userId]);
+  }, [isLoggedIn, isAdmin, userId]);
 
   const handleApprove = async (project: Project) => {
     if (!userId) return;
@@ -82,6 +83,14 @@ export default function AdminPage() {
         >
           로그인하러 가기
         </button>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="mx-auto max-w-sm px-4 py-16 text-center">
+        <p className="text-sm text-palette-muted">관리자만 이용할 수 있는 페이지예요.</p>
       </div>
     );
   }

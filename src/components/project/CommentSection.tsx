@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Comment } from "@/lib/types/comment";
-import { createComment } from "@/lib/api/comments";
+import { createComment, deleteComment, updateComment } from "@/lib/api/comments";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // ⚠️ 2026.08 실제 댓글 등록 API(POST /api/comment/{project_id}/{user_id})를 보니
@@ -17,12 +17,14 @@ export default function CommentSection({
   projectId: string;
   initialComments: Comment[];
 }) {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, userId } = useAuth();
   const [comments, setComments] = useState(initialComments);
   const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState("");
 
   const handleSubmit = async () => {
     if (!content.trim() || !nickname.trim()) return;
@@ -40,6 +42,31 @@ export default function CommentSection({
       setError(err instanceof Error ? err.message : "댓글 등록에 실패했어요.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleEdit = async (comment: Comment) => {
+    if (!editingContent.trim()) return;
+    try {
+      await updateComment(projectId, comment.id, editingContent.trim());
+      setComments((prev) =>
+        prev.map((item) =>
+          item.id === comment.id ? { ...item, content: editingContent.trim() } : item
+        )
+      );
+      setEditingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "댓글 수정에 실패했어요.");
+    }
+  };
+
+  const handleDelete = async (comment: Comment) => {
+    if (!window.confirm("댓글을 삭제할까요?")) return;
+    try {
+      await deleteComment(projectId, comment.id);
+      setComments((prev) => prev.filter((item) => item.id !== comment.id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "댓글 삭제에 실패했어요.");
     }
   };
 
@@ -87,8 +114,45 @@ export default function CommentSection({
         <ul className="space-y-3 md:space-y-5">
           {comments.map((comment) => (
             <li key={comment.id} className="border-b border-palette-border pb-3 md:pb-5">
-              <p className="text-sm font-semibold md:text-lg">{comment.authorName}</p>
-              <p className="text-sm text-palette-muted md:text-base">{comment.content}</p>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold md:text-lg">{comment.authorName}</p>
+                {comment.authorId && comment.authorId === userId && (
+                  <div className="flex shrink-0 gap-2 text-xs text-palette-muted">
+                    <button
+                      onClick={() => {
+                        setEditingId(comment.id);
+                        setEditingContent(comment.content);
+                      }}
+                    >
+                      수정
+                    </button>
+                    <button onClick={() => handleDelete(comment)}>삭제</button>
+                  </div>
+                )}
+              </div>
+              {editingId === comment.id ? (
+                <div className="mt-2 flex gap-2">
+                  <input
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    className="min-w-0 flex-1 rounded-lg bg-palette-input px-3 py-2 text-sm text-black outline-none"
+                  />
+                  <button
+                    onClick={() => handleEdit(comment)}
+                    className="shrink-0 rounded-lg bg-palette-accent px-3 py-2 text-xs font-semibold text-white"
+                  >
+                    저장
+                  </button>
+                  <button
+                    onClick={() => setEditingId(null)}
+                    className="shrink-0 rounded-lg border border-palette-border px-3 py-2 text-xs"
+                  >
+                    취소
+                  </button>
+                </div>
+              ) : (
+                <p className="text-sm text-palette-muted md:text-base">{comment.content}</p>
+              )}
             </li>
           ))}
         </ul>

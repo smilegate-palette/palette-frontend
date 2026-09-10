@@ -37,7 +37,7 @@ export default function SocialCallbackPage() {
 
     socialLogin(provider, code, state ?? undefined)
       .then((res) => {
-        applySession(res.accesstoken, res.email, res.userId);
+        applySession(res.accesstoken, res.email, res.userId, res.role);
         navigate("/");
       })
       .catch(() => setError("소셜 로그인에 실패했어요. 잠시 후 다시 시도해주세요."));

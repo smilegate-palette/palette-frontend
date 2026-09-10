@@ -17,7 +17,8 @@ export default function Header() {
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isLoggedIn, email, logout } = useAuth();
+  const { isLoggedIn, email, role, logout } = useAuth();
+  const isAdmin = role === "ADMIN";
 
   const handleAuthClick = () => {
     setMenuOpen(false);
@@ -84,7 +85,7 @@ export default function Header() {
         <div className="flex items-center gap-3">
           {/* 관리자 링크: 로그인 응답에 role 정보가 없어서 일반/관리자 계정을 구분 못 함 -
               일단 로그인만 되어 있으면 보이게 해두고, 실제 권한 체크는 AdminPage에서 API 401/403으로 처리함 */}
-          {isLoggedIn && (
+          {isAdmin && (
             <Link
               to="/admin"
               className="hidden text-sm font-medium text-palette-muted hover:text-black sm:inline"
@@ -145,7 +146,7 @@ export default function Header() {
                 </Link>
               );
             })}
-            {isLoggedIn && (
+            {isAdmin && (
               <Link
                 to="/admin"
                 onClick={() => setMenuOpen(false)}
