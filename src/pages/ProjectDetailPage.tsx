@@ -88,7 +88,7 @@ export default function ProjectDetailPage() {
           지금은 이미지 1장만 처리. 업로드 폼 만들 때 같이 확장 필요. */}
       <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-palette-placeholder md:rounded-2xl">
         <img
-          src={project.mediaUrl ?? project.thumbnailUrl}
+          src={project.thumbnailUrl || project.mediaUrl}
           alt={project.title}
           className="h-full w-full object-cover"
         />

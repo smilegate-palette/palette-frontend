@@ -32,6 +32,7 @@ export default function UploadPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [webLink, setWebLink] = useState("");
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +67,7 @@ export default function UploadPage() {
 
   const handleThumbnailChange = (file: File | undefined) => {
     if (!file) return;
+    setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
   };
 
@@ -77,9 +79,10 @@ export default function UploadPage() {
       setError("필수 항목을 확인해주세요. (프로젝트명, 프로그램, 유형, 50자 이상 프로젝트 설명은 꼭 입력해야 해요)");
       return;
     }
-
     setSubmitting(true);
     try {
+      // 파일 저장과 URL 변환은 백엔드에서 처리한다. 프론트는 선택한 파일을 data URL로 전달한다.
+      const thumbnailUrl = thumbnailFile ? await fileToDataUrl(thumbnailFile) : undefined;
       await createProject({
         program,
         year,
@@ -90,6 +93,7 @@ export default function UploadPage() {
         participants,
         description,
         mediaUrl: mediaType === "video" ? videoUrl : mediaType === "link" ? webLink : undefined,
+        thumbnailUrl,
       });
       navigate("/project");
     } catch (err) {
@@ -330,6 +334,15 @@ export default function UploadPage() {
       </form>
     </div>
   );
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("썸네일 파일을 읽지 못했습니다. 다시 선택해 주세요."));
+    reader.readAsDataURL(file);
+  });
 }
 
 const inputClass =

@@ -19,8 +19,20 @@ import { getStoredUserId } from "@/lib/auth/token";
 //    media_url, category 등, 단 likeCount만 예외적으로 camelCase) 기준 추정치입니다 - 실제 데이터 들어오면 꼭 재확인해주세요.
 // [x] partipants 오타 -> participants로 수정 확인함 (2026.09.06)
 export function mapProjectResponse(raw: Record<string, unknown>): Project {
+  // 목록/상세 API의 응답 DTO 이름이 배포 버전에 따라 camelCase 또는 snake_case일 수 있다.
+  // 이미지가 없는 것처럼 보이지 않도록 알려진 이미지 필드를 모두 수용한다.
+  const thumbnailUrl =
+    (raw.thumbnail_url as string) ??
+    (raw.thumbnailUrl as string) ??
+    (raw.thumbnail as string) ??
+    (raw.image_url as string) ??
+    (raw.imageUrl as string) ??
+    (raw.image as string) ??
+    (raw.media_url as string) ??
+    "";
+
   return {
-    id: String(raw.id ?? raw.project_id ?? ""),
+    id: String(raw.id ?? raw.project_id ?? raw.projectId ?? raw.projectID ?? ""),
     title: (raw.project_title as string) ?? "",
     program: (raw.program_name as Project["program"]) ?? "창의워크숍",
     types: raw.category ? [raw.category as Project["types"][number]] : [],
@@ -29,7 +41,7 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
     organization: raw.organization as string | undefined,
     team: raw.team as string | undefined,
     participants: (raw.participants as string[]) ?? [],
-    thumbnailUrl: (raw.thumbnail_url as string) ?? (raw.media_url as string) ?? "",
+    thumbnailUrl,
     mediaUrl: raw.media_url as string | undefined,
     description: raw.description as string | undefined,
     // ProjectRequest 스키마엔 likeCount(camelCase)로 되어 있는데 다른 필드는 전부 snake_case라
@@ -93,15 +105,15 @@ export async function getProjects(
 }
 
 export async function getProjectDetail(id: string): Promise<Project | undefined> {
-  if (USE_MOCK) {
-    return mockProjects.find((p) => p.id === id);
-  }
   // 2026.08 Swagger에 GET /api/project/{project_id}(operationId: GetProjectDetail) 추가됨.
   // 응답 스키마가 제네릭 object라 정확한 필드명은 미확정 - 목록 조회와 같은 ProjectRequest 기반
   // snake_case로 가정하고 mapProjectResponse를 그대로 재사용함. 실제 데이터 보고 다르면 고쳐야 함.
   try {
-    const raw = await apiFetch<Record<string, unknown>>(`/api/project/${id}`);
-    return mapProjectResponse(raw);
+    const raw = await apiFetch<Record<string, unknown>[] | Record<string, unknown>>(
+      `/api/project/${id}`
+    );
+    const detail = Array.isArray(raw) ? raw[0] : raw;
+    return detail ? mapProjectResponse(detail) : undefined;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return undefined;
     throw err;
@@ -120,6 +132,8 @@ export interface CreateProjectPayload {
   participants?: string[];
   description: string;
   mediaUrl?: string;
+  /** 서버가 별도 파일 업로드 API를 제공하지 않는 현재 계약에서는 data URL로 전송한다. */
+  thumbnailUrl?: string;
 }
 
 export async function createProject(payload: CreateProjectPayload): Promise<void> {
@@ -136,6 +150,7 @@ export async function createProject(payload: CreateProjectPayload): Promise<void
     description: payload.description,
     category: payload.category || undefined,
     media_url: payload.mediaUrl,
+    thumbnail_url: payload.thumbnailUrl,
   };
 
   if (USE_MOCK) {
