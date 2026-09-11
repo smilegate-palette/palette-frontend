@@ -29,6 +29,7 @@ export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 export interface Project {
   id: string;
   ownerId?: string;
+  ownerName?: string;
   title: string; // 프로젝트 이름
   program: ProgramType; // 대분류: 창의워크숍 / 유스파티
   types: ProjectType[]; // 형태 (다중 선택 가능)

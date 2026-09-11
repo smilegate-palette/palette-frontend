@@ -1,6 +1,7 @@
 import { apiFetch } from "./client";
 import { mapProjectResponse } from "./projects";
 import { Project } from "@/lib/types/project";
+import { Comment } from "@/lib/types/comment";
 
 // 2026.09 배포된 실제 Swagger(admin-controller) 기준 엔드포인트:
 //   GET  /api/admin/{user_id}                              관리자 대시보드(추정) - operationId: Adminpage
@@ -20,7 +21,38 @@ import { Project } from "@/lib/types/project";
 export interface AdminDashboard {
   pendingProjects: Project[];
   allProjects: Project[];
+  comments: Comment[];
+  stories: AdminStory[];
+  curation: CurationSection[];
   totalCount?: number;
+  stats?: AdminStats;
+}
+
+export interface AdminStats {
+  pendingApproval: number;
+  todayComments: number;
+  totalProjects: number;
+  totalStories: number;
+}
+
+export interface AdminStory {
+  id: string;
+  title: string;
+  username?: string;
+  createdAt?: string;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
+}
+
+function extractArray(raw: unknown, keys: string[]): Record<string, unknown>[] {
+  if (Array.isArray(raw)) return raw as Record<string, unknown>[];
+  const object = asRecord(raw);
+  for (const key of keys) {
+    if (Array.isArray(object[key])) return object[key] as Record<string, unknown>[];
+  }
+  return [];
 }
 
 function extractProjectArray(raw: unknown): Record<string, unknown>[] {
@@ -28,7 +60,7 @@ function extractProjectArray(raw: unknown): Record<string, unknown>[] {
   if (raw && typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
     const candidate =
-      obj.projects ?? obj.pendingProjects ?? obj.pending_projects ?? obj.items ?? obj.content;
+      obj.projects ?? obj.project ?? obj.pendingProjects ?? obj.pending_projects ?? obj.items ?? obj.content;
     if (Array.isArray(candidate)) return candidate as Record<string, unknown>[];
   }
   return [];
@@ -38,11 +70,52 @@ export async function getAdminDashboard(userId: string): Promise<AdminDashboard>
   const raw = await apiFetch<Record<string, unknown> | Record<string, unknown>[]>(
     `/api/admin/${encodeURIComponent(userId)}`
   );
-  const list = extractProjectArray(raw).map(mapProjectResponse);
+  const object = asRecord(raw);
+  const pendingProjects = extractArray(object.pendingProjects ?? object.pending_projects, ["items", "content"]);
+  const list = (pendingProjects.length > 0 ? pendingProjects : extractProjectArray(raw)).map(mapProjectResponse);
+  const comments = extractArray(
+    object.recentComments ?? object.recent_comments ?? object.comments,
+    ["items", "content"]
+  ).map((comment) => ({
+    id: String(comment.id ?? comment.comment_id ?? ""),
+    projectId: String(comment.project_id ?? comment.projectId ?? ""),
+    authorId: String(comment.user_id ?? comment.userId ?? comment.author_id ?? "") || undefined,
+    authorName: String(comment.nickname ?? comment.author_name ?? comment.authorName ?? "익명"),
+    projectTitle: (comment.project_title ?? comment.projectTitle) as string | undefined,
+    content: String(comment.content ?? ""),
+    createdAt: String(comment.created_at ?? comment.createdAt ?? comment.createdDate ?? ""),
+  }));
+  const stories = extractArray(
+    object.stories ?? object.storyUploads ?? object.story_uploads,
+    ["items", "content"]
+  ).map((story) => ({
+    id: String(story.id ?? story.story_id ?? ""),
+    title: String(story.story_title ?? story.title ?? ""),
+    username: (story.story_username ?? story.username) as string | undefined,
+    createdAt: (story.created_at ?? story.createdAt) as string | undefined,
+  }));
+  const curation = extractSections(
+    object.curationSections ??
+      object.curation ??
+      object.homeCuration ??
+      object.home_curation ??
+      object.curationSettings ??
+      []
+  );
+  const statsObject = asRecord(object.stats);
   return {
     pendingProjects: list.filter((p) => (p.status ?? "PENDING") === "PENDING"),
     allProjects: list,
-    totalCount: Array.isArray(raw) ? raw.length : undefined,
+    comments,
+    stories,
+    curation,
+    totalCount: Number(statsObject.totalProjects ?? object.totalCount ?? object.total_count ?? list.length),
+    stats: {
+      pendingApproval: Number(statsObject.pendingApproval ?? list.length),
+      todayComments: Number(statsObject.todayComments ?? 0),
+      totalProjects: Number(statsObject.totalProjects ?? list.length),
+      totalStories: Number(statsObject.totalStories ?? stories.length),
+    },
   };
 }
 
@@ -57,9 +130,8 @@ export async function getAdminProjectDetail(
 }
 
 export async function approveProject(userId: string, projectId: string): Promise<void> {
-  // 스펙상 GET 요청임 (승인처럼 상태를 바꾸는 동작인데 GET인 게 특이함 - 백엔드 스펙 그대로 따름)
   await apiFetch<void>(
-    `/api/admin/${encodeURIComponent(userId)}/${projectId}/approve`
+    `/api/admin/${encodeURIComponent(userId)}/${encodeURIComponent(projectId)}/approve`
   );
 }
 
@@ -68,10 +140,42 @@ export async function rejectProject(
   projectId: string,
   rejectReason: string
 ): Promise<void> {
-  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/${projectId}/reject`, {
+  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/${encodeURIComponent(projectId)}/reject`, {
     method: "POST",
     body: JSON.stringify({ reject_reason: rejectReason }),
   });
+}
+
+export async function getAdminComments(
+  userId: string,
+  projectIdsByTitle: Map<string, string> = new Map()
+): Promise<Comment[]> {
+  const raw = await apiFetch<unknown>(`/api/admin/${encodeURIComponent(userId)}/comment/`);
+  return extractArray(raw, ["comments", "items", "content"]).map((comment) => ({
+    id: String(comment.id ?? comment.comment_id ?? ""),
+    projectId: String(
+      comment.project_id ??
+        comment.projectId ??
+        projectIdsByTitle.get(String(comment.project_title ?? "")) ??
+        ""
+    ),
+    authorId: String(comment.user_id ?? comment.userId ?? comment.author_id ?? "") || undefined,
+    authorName: String(comment.nickname ?? comment.author_name ?? comment.authorName ?? "익명"),
+    projectTitle: (comment.project_title ?? comment.projectTitle) as string | undefined,
+    content: String(comment.content ?? ""),
+    createdAt: String(comment.created_at ?? comment.createdAt ?? comment.createdDate ?? ""),
+  }));
+}
+
+export async function deleteAdminComment(
+  userId: string,
+  projectId: string,
+  commentId: string
+): Promise<void> {
+  await apiFetch<void>(
+    `/api/comment/${encodeURIComponent(projectId)}/${encodeURIComponent(userId)}/${encodeURIComponent(commentId)}`,
+    { method: "DELETE" }
+  );
 }
 
 // 관리자 프로젝트 직접 수정. Figma 관리자 시안(node 92:2)엔 프로젝트명/유형/설명/썸네일/추가 필드까지
@@ -98,6 +202,7 @@ export interface CurationSection {
   sectionId: number;
   title: string;
   projectIds: number[];
+  projectTitles: Record<string, string>;
 }
 
 function extractSections(raw: unknown): CurationSection[] {
@@ -107,11 +212,26 @@ function extractSections(raw: unknown): CurationSection[] {
     ? (raw as Record<string, unknown>).sections ?? (raw as Record<string, unknown>).curations
     : [];
   if (!Array.isArray(list)) return [];
-  return (list as Record<string, unknown>[]).map((s) => ({
-    sectionId: Number(s.section_id ?? s.sectionId ?? 0),
-    title: (s.title as string) ?? (s.name as string) ?? "",
-    projectIds: ((s.project_ids ?? s.projectIds ?? []) as (number | string)[]).map(Number),
-  }));
+  return (list as Record<string, unknown>[]).map((s) => {
+    const sectionProjects = Array.isArray(s.sectionProjects)
+      ? s.sectionProjects.map(asRecord)
+      : [];
+    const projectTitles = Object.fromEntries(
+      sectionProjects.map((project) => [
+        String(project.projectId ?? ""),
+        String(project.projectTitle ?? ""),
+      ])
+    );
+    return {
+      sectionId: Number(s.section_id ?? s.sectionId ?? 0),
+      title: (s.title as string) ?? (s.name as string) ?? "",
+      projectIds: (
+        (s.project_ids ?? s.projectIds ?? sectionProjects.map((project) => project.projectId)) as
+          (number | string)[]
+      ).map(Number),
+      projectTitles,
+    };
+  });
 }
 
 export async function getCuration(userId: string): Promise<CurationSection[]> {

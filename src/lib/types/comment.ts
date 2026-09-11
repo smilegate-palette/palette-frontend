@@ -3,6 +3,7 @@ export interface Comment {
   projectId: string;
   authorId?: string;
   authorName: string;
+  projectTitle?: string;
   content: string;
   createdAt: string;
   status?: "approved" | "hidden"; // 관리자 댓글 승인/비공개 상태 (/api/admin/status)

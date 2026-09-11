@@ -42,7 +42,10 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
         (raw.user as Record<string, unknown> | undefined)?.id ??
         ""
     ) || undefined,
-    title: (raw.project_title as string) ?? "",
+    ownerName: (raw.owner_name ?? raw.ownerName ?? raw.username ?? raw.user_name ?? raw.submitter) as
+      | string
+      | undefined,
+    title: (raw.project_title ?? raw.projectTitle ?? raw.title ?? "") as string,
     program: (raw.program_name as Project["program"]) ?? "창의워크숍",
     types: raw.category ? [raw.category as Project["types"][number]] : [],
     year: (raw.year as number) ?? new Date().getFullYear(),
@@ -58,7 +61,7 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
     likeCount: (raw.likeCount as number) ?? (raw.like_count as number) ?? 0,
     isFeatured: (raw.is_featured as boolean) ?? false,
     curationTags: (raw.curation_tags as string[]) ?? [],
-    createdAt: raw.created_at as string | undefined,
+    createdAt: (raw.created_at ?? raw.createdAt ?? raw.createdDate) as string | undefined,
     status: raw.status as Project["status"],
     rejectReason: raw.reject_reason as string | undefined,
   };
