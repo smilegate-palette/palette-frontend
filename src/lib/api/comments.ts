@@ -14,6 +14,9 @@ import { getStoredUserId } from "@/lib/auth/token";
 // ⚠️ 응답 스키마가 Swagger에 제네릭 object로만 나와 있어 정확한 필드명은 추정치입니다.
 //    실제 데이터 확인되면 아래 mapCommentResponse만 고치면 됩니다.
 
+// 비회원용 user_id 값 (경로에 문자열 "null"로 들어감 - 백엔드와 합의된 방식)
+const GUEST_USER_ID = "null";
+
 function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Comment {
   return {
     id: String(raw.id ?? raw.comment_id ?? `comment-${Date.now()}`),
@@ -60,11 +63,8 @@ export async function createComment(
     return newComment;
   }
 
-  const userId = getStoredUserId();
-  if (!userId) {
-    // 실제 API는 로그인한 사용자만 댓글을 작성할 수 있음 (경로에 user_id 필요)
-    throw new Error("로그인 후 댓글을 작성할 수 있어요.");
-  }
+  // 2026.10 백엔드 답변: 비회원은 user_id 자리에 null을 보내면 서버가 임의 값을 넣어 저장함.
+  const userId = getStoredUserId() ?? GUEST_USER_ID;
 
   const raw = await apiFetch<Record<string, unknown> | undefined>(
     `/api/comment/${payload.projectId}/${encodeURIComponent(userId)}`,

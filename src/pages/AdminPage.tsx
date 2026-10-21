@@ -5,6 +5,7 @@ import {
   getAdminDashboard,
   getAdminComments,
   deleteAdminComment,
+  createStory,
   approveProject,
   rejectProject,
   updateAdminProject,
@@ -58,6 +59,11 @@ export default function AdminPage() {
   const [sections, setSections] = useState<CurationSection[] | null>(null);
   const [curationError, setCurationError] = useState<string | null>(null);
   const [savingSectionId, setSavingSectionId] = useState<number | null>(null);
+  const [storyTitle, setStoryTitle] = useState("");
+  const [storyUsername, setStoryUsername] = useState("");
+  const [storyFile, setStoryFile] = useState<File | null>(null);
+  const [storySubmitting, setStorySubmitting] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
   const commentSectionRef = useRef<HTMLElement | null>(null);
 
   const load = async (uid: string) => {
@@ -175,6 +181,34 @@ export default function AdminPage() {
       setEditError("수정에 실패했어요.");
     } finally {
       setActioningId(null);
+    }
+  };
+
+  const submitStory = async () => {
+    if (!userId || !storyTitle.trim()) {
+      setStoryError("스토리 제목을 입력해주세요.");
+      return;
+    }
+    setStorySubmitting(true);
+    setStoryError(null);
+    try {
+      const thumbnailDataUrl = storyFile
+        ? await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(new Error("이미지 파일을 읽지 못했어요."));
+            reader.readAsDataURL(storyFile);
+          })
+        : undefined;
+      await createStory(userId, { title: storyTitle.trim(), username: storyUsername.trim(), thumbnailDataUrl });
+      setStoryTitle("");
+      setStoryUsername("");
+      setStoryFile(null);
+      await load(userId);
+    } catch (err) {
+      setStoryError(err instanceof Error ? err.message : "스토리 등록에 실패했어요.");
+    } finally {
+      setStorySubmitting(false);
     }
   };
 
@@ -563,6 +597,34 @@ export default function AdminPage() {
       {/* 스토리 업로드 */}
       <section id="story-upload" className="scroll-mt-20">
         <h2 className="mb-3 text-lg font-bold md:mb-4 md:text-2xl">스토리 업로드</h2>
+        <div className="mb-4 grid gap-2 rounded-xl bg-palette-section p-3 md:grid-cols-[1fr_1fr_auto_auto] md:p-4">
+          <input
+            value={storyTitle}
+            onChange={(e) => setStoryTitle(e.target.value)}
+            placeholder="스토리 제목"
+            className="min-w-0 rounded-lg bg-white px-3 py-2 text-sm outline-none placeholder:text-palette-muted"
+          />
+          <input
+            value={storyUsername}
+            onChange={(e) => setStoryUsername(e.target.value)}
+            placeholder="작성자/출처"
+            className="min-w-0 rounded-lg bg-white px-3 py-2 text-sm outline-none placeholder:text-palette-muted"
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setStoryFile(e.target.files?.[0] ?? null)}
+            className="min-w-0 text-xs"
+          />
+          <button
+            onClick={submitStory}
+            disabled={storySubmitting}
+            className="rounded-lg bg-[#20b958] px-4 py-2 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {storySubmitting ? "등록 중..." : "스토리 등록"}
+          </button>
+          {storyError && <p className="text-xs text-red-500 md:col-span-4">{storyError}</p>}
+        </div>
         {stories.length === 0 ? <p className="text-sm text-palette-muted">업로드된 스토리가 없어요.</p> : (
           <ul className="grid gap-2 md:grid-cols-2">
             {stories.map((story) => (

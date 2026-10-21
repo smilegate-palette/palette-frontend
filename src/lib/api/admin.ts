@@ -249,3 +249,18 @@ export async function saveCurationOrder(
     body: JSON.stringify({ section_id: sectionId, projectIds }),
   });
 }
+
+// 스토리 등록. 프로젝트 등록처럼 이미지를 data URL로 보내면 백엔드가 thumbnail_url을 만들어 저장함(백엔드 답변 2026.10).
+export async function createStory(
+  userId: string,
+  payload: { title: string; username: string; thumbnailDataUrl?: string }
+): Promise<void> {
+  await apiFetch<void>(`/api/admin/story/${encodeURIComponent(userId)}`, {
+    method: "POST",
+    body: JSON.stringify({
+      story_title: payload.title,
+      story_username: payload.username,
+      thumbnail_url: payload.thumbnailDataUrl,
+    }),
+  });
+}
