@@ -324,17 +324,20 @@ export default function AboutPalettePage() {
   return (
     <div className="px-4 py-6 md:px-6 md:py-10">
       {/* 히어로 */}
-      <section className="mx-auto mb-14 max-w-5xl text-center md:mb-20 3xl:max-w-[1800px]">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-[#ffd400] md:text-sm">
-          ABOUT PALETTE
-        </p>
-        <h1 className="mb-4 text-xl font-bold leading-snug md:mb-6 md:text-3xl">
+      <section className="mx-auto mb-14 max-w-[1290px] md:mb-20 3xl:max-w-[1800px]">
+        {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
+            1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
+        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-[2.5vw]">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
+        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6]">
+          <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
+          <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
+          <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
+        </div>
 
-        {/* 실제 팔레트 자체 제작 일러스트 필요 - public/images/about-hero.png 만 넣어주시면 바로 나와요.
-            아직 파일이 없어서 임시로 안내 박스만 표시해뒀어요. */}
-        <div className="mx-auto mb-8 flex aspect-square w-full max-w-md items-center justify-center rounded-full bg-palette-section text-sm text-palette-muted md:mb-10">
+        {/* 실제 팔레트 자체 제작 일러스트 필요 - public/images/about-hero.png 만 넣어주시면 바로 나와요. */}
+        <div className="mx-auto mt-8 flex aspect-square w-full max-w-md items-center justify-center rounded-full bg-palette-section text-sm text-palette-muted md:mt-10">
           {heroImageFailed ? (
             <span>일러스트 이미지 준비중</span>
           ) : (
@@ -346,22 +349,10 @@ export default function AboutPalettePage() {
             />
           )}
         </div>
-
-        <div className="mx-auto max-w-3xl space-y-1 text-sm leading-relaxed text-palette-text md:text-lg">
-          <p>
-            팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는
-            창의 커뮤니티입니다.
-          </p>
-          <p>
-            2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을
-            발견하고 관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수
-            있도록 지원하고 있습니다.
-          </p>
-        </div>
       </section>
 
       {/* 팔레트가 만드는 창의환경 - 카테고리 4개 탭 + 클릭 시 하단에 상세 목록 등장 */}
-      <section className="mx-auto max-w-5xl 3xl:max-w-[1800px]">
+      <section className="mx-auto max-w-[1290px] 3xl:max-w-[1800px]">
         <h2 className="mb-6 text-lg font-bold md:mb-8 md:text-2xl">팔레트가 만드는 창의환경</h2>
 
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
@@ -421,7 +412,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트 프로그램 */}
-      <section className="mx-auto mt-14 max-w-5xl 3xl:max-w-[1800px] md:mt-20">
+      <section className="mx-auto mt-14 max-w-[1290px] 3xl:max-w-[1800px] md:mt-20">
         <h2 className="mb-6 text-lg font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
           {PROGRAMS.map((program) => (
@@ -466,7 +457,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* IMPACT - "팔레트가 함께 만든 변화" (2026.10 시안) */}
-      <section className="mx-auto mt-14 max-w-5xl 3xl:max-w-[1800px] md:mt-20">
+      <section className="mx-auto mt-14 max-w-[1290px] 3xl:max-w-[1800px] md:mt-20">
         <h2 className="mb-4 text-lg font-bold md:mb-6 md:text-3xl">IMPACT</h2>
         <h3 className="mb-3 text-base font-bold md:mb-5 md:text-2xl">팔레트가 함께 만든 변화</h3>
 
