@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 interface CategoryDetail {
   role?: string; // 있으면 title 위에 작은 글씨로 표시 (예: "청년 창작 멘토" + "Hope Creator")
   title: string;
+  image?: string; // 항목 사진 (public/images/about/)
   description: string;
 }
 
@@ -35,18 +36,21 @@ const CATEGORIES: Category[] = [
     summary: "관심사를 발견하고 창작으로 표현하는 경험",
     color: "#ffd400",
     bg: "#fffced",
-    icon: "🎨",
+    icon: "/images/about/icon-projects.png",
     details: [
       {
         title: "Experience",
+        image: "/images/about/experience.png",
         description: "다양한 창작 활동을 경험하며 자신의 관심사를 탐색합니다",
       },
       {
         title: "Self-project",
+        image: "/images/about/self-project.png",
         description: "또래 창작자들과 팀을 이루어 각자의 관심사를 담은 프로젝트를 기획하고 실행합니다",
       },
       {
         title: "Motivation & Culture",
+        image: "/images/about/motivation-culture.png",
         description:
           "프로젝트를 다른 기관 창작자들과 공유하고 피드백을 나누며, 함께 성장하는 창작 문화를 만들어갑니다",
       },
@@ -62,11 +66,13 @@ const CATEGORIES: Category[] = [
     details: [
       {
         title: "Open Studio",
+        image: "/images/about/open-studio.png",
         description:
           "서로 다른 프로젝트를 진행하는 창작자들이 만나 각자의 프로토타입을 소개하고, 또래 창작자 관점에서 피드백을 나눕니다",
       },
       {
         title: "Palette Festa",
+        image: "/images/about/palette-festa.png",
         description: "완성된 프로젝트를 전시하고 발표하며, 유저와 직접 교류합니다",
       },
     ],
@@ -82,16 +88,19 @@ const CATEGORIES: Category[] = [
       {
         role: "청년 창작 멘토",
         title: "Hope Creator",
+        image: "/images/about/hope-creator.png",
         description: "지역 청년이 아이들의 멘토가 되어 관심사 탐색과 창작의 전 과정을 조력합니다",
       },
       {
         role: "기관 돌봄 교사",
         title: "Palette Bridge",
+        image: "/images/about/palette-bridge.png",
         description: "창의 창작 활동을 위한 현장을 조성하고 아이들을 지원합니다",
       },
       {
         role: "전문가 창작 멘토",
         title: "Palette Meister",
+        image: "/images/about/palette-meister.png",
         description: "전문가가 가진 경험과 역량을 기반으로 창작 멘토링을 지원합니다",
       },
     ],
@@ -106,10 +115,12 @@ const CATEGORIES: Category[] = [
     details: [
       {
         title: "방과 후 돌봄시설",
+        image: "/images/about/partner-care.png",
         description: "기관 현장에서 지속 가능한 창의환경을 직접 조성합니다",
       },
       {
         title: "공공·기업",
+        image: "/images/about/partner-public.png",
         description: "더 많은 지역의 아이들이 창의 환경을 경험할 수 있도록 확산에 동행합니다",
       },
     ],
@@ -119,10 +130,11 @@ const CATEGORIES: Category[] = [
 // ---- 2026.10 시안 추가분: 팔레트 프로그램 / IMPACT / 성장 지표 + 후기 ----
 // 디자이너 메모: "모든 수치/참여자 후기는 관리자 페이지에서 수정 가능하도록 개발 필요".
 // 백엔드 API가 아직 없어서 아래 상수에 고정값으로 넣어뒀고, API 생기면 이 상수만 fetch 결과로 교체하면 돼요.
-// 프로그램 카드의 "사진 추가" 자리는 실제 사진 파일이 없어서 회색 placeholder로 두었어요.
+// 사진/아이콘은 public/images/about/ 에 있어요(디자인팀 전달 파일).
 
 interface Program {
   name: string;
+  image: string;
   period: string;
   subtitle: string;
   description: string;
@@ -131,6 +143,7 @@ interface Program {
 const PROGRAMS: Program[] = [
   {
     name: "아하! 팔레트",
+    image: "/images/about/program-aha.png",
     period: "4-8주",
     subtitle: "어린이 AI & Hands-On 창의 프로그램",
     description:
@@ -138,6 +151,7 @@ const PROGRAMS: Program[] = [
   },
   {
     name: "드림 온 페스타",
+    image: "/images/about/program-dream-on.png",
     period: "4시간",
     subtitle: "원데이 청소년 창의 ·창작 페스티벌",
     description:
@@ -146,6 +160,7 @@ const PROGRAMS: Program[] = [
   {
     // 시안에 설명이 "아하! 팔레트"와 동일하게 복붙돼 있어서(디자이너 확인 필요) 일단 시안 그대로 넣었어요.
     name: "팔레트 플레이어",
+    image: "/images/about/program-player.png",
     period: "6주",
     subtitle: "어린이 AI & Hands-On 창의 프로그램",
     description:
@@ -153,6 +168,7 @@ const PROGRAMS: Program[] = [
   },
   {
     name: "팔레트 창의워크숍",
+    image: "/images/about/program-workshop.png",
     period: "6개월",
     subtitle: "청소년 AI 기반 자율 창작 프로그램",
     description:
@@ -160,6 +176,7 @@ const PROGRAMS: Program[] = [
   },
   {
     name: "드림 부스터 캠프",
+    image: "/images/about/program-booster.png",
     period: "2-5일",
     subtitle: "청소년 디지털 ·AI 창작 캠프",
     description:
@@ -169,21 +186,21 @@ const PROGRAMS: Program[] = [
 
 // 2026.10 IMPACT 개편 시안 반영: 큰 카드 2개 + 작은 지표 4개 + 색 카드 성장 지표. 숫자는 화면에 보일 때 카운트업.
 const BIG_STATS = [
-  { label: "참여 아동", value: 14230, unit: "명", note: "(연 인원)", icon: "👧", bg: "linear-gradient(135deg,#ffc58f,#ff9f6b)", border: "#ff9f6b" },
+  { label: "참여 아동", value: 14230, unit: "명", note: "(연 인원)", icon: "/images/about/icon-children.png", bg: "linear-gradient(135deg,#ffc58f,#ff9f6b)", border: "#ff9f6b" },
   { label: "창작 프로젝트", value: 219, unit: "개", note: "", icon: "🎨", bg: "#fff1c4", border: "#ffd400" },
 ];
 
 const SMALL_STATS = [
-  { icon: "🗺️", value: 15, unit: "개 지역", label: "확산 지역" },
-  { icon: "🏫", value: 128, unit: "개", label: "참여 기관 수" },
-  { icon: "👥", value: 5334, unit: "명", label: "참여 조력자(연 인원)" },
-  { icon: "⏱️", value: 46781, unit: "h", label: "참여 시간" },
+  { icon: "/images/about/icon-regions.png", value: 15, unit: "개 지역", label: "확산 지역" },
+  { icon: "/images/about/icon-institutions.png", value: 128, unit: "개", label: "참여 기관 수" },
+  { icon: "/images/about/icon-supporters.png", value: 5334, unit: "명", label: "참여 조력자(연 인원)" },
+  { icon: "/images/about/icon-time.png", value: 46781, unit: "h", label: "참여 시간" },
 ];
 
 const CHILD_GROWTH = [
-  { icon: "🌱", label: "자신감", value: 4.85, bg: "#e6f6e6" },
-  { icon: "🧭", label: "자기표현력", value: 4.74, bg: "#fff1c4" },
-  { icon: "🧩", label: "협업 역량", value: 4.62, bg: "#efe6fb" },
+  { icon: "/images/about/icon-confidence.png", label: "자신감", value: 4.85, bg: "#e6f6e6" },
+  { icon: "/images/about/icon-expression.png", label: "자기표현력", value: 4.74, bg: "#fff1c4" },
+  { icon: "/images/about/icon-collaboration.png", label: "협업 역량", value: 4.62, bg: "#efe6fb" },
 ];
 
 const MENTOR_GROWTH = [
@@ -191,6 +208,17 @@ const MENTOR_GROWTH = [
   { icon: "💬", label: "소통·협업역량", value: 4.85, bg: "#fff1c4" },
   { icon: "🌟", label: "리더십", value: 4.8, bg: "#efe6fb" },
 ];
+
+// 경로(/images/...)면 이미지로, 아니면 이모지 텍스트로 표시
+function Icon({ src, className }: { src: string; className: string }) {
+  return src.startsWith("/") ? (
+    <img src={src} alt="" className={className} />
+  ) : (
+    <span aria-hidden className={className}>
+      {src}
+    </span>
+  );
+}
 
 // 화면에 보이면 0에서 목표값까지 올라가는 숫자. "움직임 줄이기" 설정이면 애니메이션 없이 바로 표시.
 function CountUp({ value, decimals = 0, duration = 1400 }: { value: number; decimals?: number; duration?: number }) {
@@ -259,7 +287,7 @@ function GrowthRow({ items }: { items: { icon: string; label: string; value: num
         <div key={item.label} className="rounded-xl p-3 md:rounded-2xl md:p-6" style={{ backgroundColor: item.bg }}>
           <div className="flex items-start justify-between gap-1">
             <p className="text-xs font-bold md:text-xl">{item.label}</p>
-            <span className="text-base md:text-3xl">{item.icon}</span>
+            <Icon src={item.icon} className="h-8 w-8 object-contain text-base md:h-16 md:w-16 md:text-3xl" />
           </div>
           <p className="mt-2 text-right md:mt-4">
             <span className="text-2xl font-extrabold md:text-6xl">
@@ -367,6 +395,9 @@ export default function AboutPalettePage() {
             <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
               {activeCategory.details.map((detail, i) => (
                 <li key={detail.title} className="flex flex-col items-center gap-1.5 text-center">
+                  {detail.image && (
+                    <img src={detail.image} alt={detail.title} className="mb-2 aspect-[3/2] w-full rounded-xl object-cover" />
+                  )}
                   <span
                     className="mb-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
                     style={{ backgroundColor: activeCategory.color }}
@@ -399,9 +430,7 @@ export default function AboutPalettePage() {
               className="relative overflow-hidden rounded-2xl bg-white"
               style={{ boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.25)" }}
             >
-              <div className="flex aspect-[4/3] items-center justify-center bg-palette-placeholder text-sm text-white">
-                사진 추가
-              </div>
+              <img src={program.image} alt={program.name} className="aspect-[16/9] w-full object-cover" />
               <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold md:text-sm">
                 {program.period}
               </span>
@@ -450,7 +479,7 @@ export default function AboutPalettePage() {
             >
               <div className="flex items-start justify-between">
                 <p className="text-sm font-bold md:text-2xl">{stat.label}</p>
-                <span className="text-2xl md:text-5xl">{stat.icon}</span>
+                <Icon src={stat.icon} className="h-10 w-10 object-contain text-2xl md:h-24 md:w-24 md:text-5xl" />
               </div>
               <p className="mt-2 md:mt-6">
                 <span className="text-3xl font-extrabold md:text-7xl 3xl:text-8xl">
@@ -469,7 +498,7 @@ export default function AboutPalettePage() {
               key={stat.label}
               className={`flex flex-col items-center text-center ${i > 0 ? "md:border-l md:border-palette-border" : ""}`}
             >
-              <span className="text-4xl md:text-6xl">{stat.icon}</span>
+              <Icon src={stat.icon} className="h-14 w-14 object-contain text-4xl md:h-24 md:w-24 md:text-6xl" />
               <p className="mt-2 md:mt-3">
                 <span className="text-2xl font-extrabold md:text-5xl">
                   <CountUp value={stat.value} />
