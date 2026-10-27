@@ -32,8 +32,9 @@ export async function apiFetch<T>(
   // 로그인 되어 있으면 모든 요청에 Authorization: Bearer 토큰을 자동으로 붙임.
   // (로그인 자체 요청인 /api/login, /api/signup 계열은 어차피 로그인 전이라 토큰이 없어서 안 붙음)
   const token = getToken();
+  const isGet = (options.method ?? "GET").toUpperCase() === "GET";
 
-  const res = await fetch(`${API_BASE_URL}${path}`, {
+  let res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -41,6 +42,18 @@ export async function apiFetch<T>(
       ...options.headers,
     },
   });
+
+  // 오래됐거나 서버가 거절하는 토큰이 남아 있으면 로그인 안 한 사람도 볼 수 있는 목록/상세 조회까지 실패할 수 있음.
+  // (사람마다 "목록이 보이는 사람/안 보이는 사람"이 갈리던 원인 후보) -> 조회(GET)는 토큰을 지우고 토큰 없이 한 번 더 시도함.
+  if (token && isGet && (res.status === 401 || res.status === 403)) {
+    clearSession();
+    const { Authorization: _drop, ...rest } = (options.headers ?? {}) as Record<string, string>;
+    void _drop;
+    res = await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      headers: { "Content-Type": "application/json", ...rest },
+    });
+  }
 
   if (!res.ok) {
     let body: Partial<ApiErrorBody> | undefined;

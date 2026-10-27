@@ -19,6 +19,8 @@ export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState(false);
+  // 401/403 외의 실패(서버 오류, 네트워크/CORS 차단 등)는 빈 목록과 구분되도록 원인을 화면에 표시
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<(typeof YEAR_FILTERS)[number]>("ALL");
   const [programFilter, setProgramFilter] = useState<ProgramType | null>(null);
   const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
@@ -44,12 +46,19 @@ export default function ProjectListPage() {
 
     setLoading(true);
     setAuthError(false);
+    setLoadError(null);
     getProjects(params)
       .then((res) => setProjects(res.projects))
       .catch((err) => {
         // 백엔드가 로그인 여부를 먼저 확인하는 구조라, 비로그인 상태면 401/403이 날 수 있음
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
           setAuthError(true);
+        } else {
+          setLoadError(
+            err instanceof ApiError
+              ? `서버 오류가 발생했어요 (${err.status})`
+              : "서버에 연결하지 못했어요 (네트워크/CORS/주소 확인 필요)"
+          );
         }
         setProjects([]);
       })
@@ -161,6 +170,11 @@ export default function ProjectListPage() {
           >
             로그인하러 가기
           </Link>
+        </div>
+      ) : loadError ? (
+        <div className="flex flex-col items-center gap-3 py-16 text-center">
+          <p className="text-sm text-red-500">{loadError}</p>
+          <p className="text-xs text-palette-muted">잠시 후 새로고침해 보시고, 계속되면 개발자에게 위 문구를 알려주세요.</p>
         </div>
       ) : !loading && projects.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
