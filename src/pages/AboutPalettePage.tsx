@@ -36,7 +36,7 @@ const CATEGORIES: Category[] = [
     summary: "관심사를 발견하고 창작으로 표현하는 경험",
     color: "#ffd400",
     bg: "#fffced",
-    icon: "/images/about/icon-projects.png",
+    icon: "🎨",
     details: [
       {
         title: "Experience",
@@ -187,7 +187,7 @@ const PROGRAMS: Program[] = [
 // 2026.10 IMPACT 개편 시안 반영: 큰 카드 2개 + 작은 지표 4개 + 색 카드 성장 지표. 숫자는 화면에 보일 때 카운트업.
 const BIG_STATS = [
   { label: "참여 아동", value: 14230, unit: "명", note: "(연 인원)", icon: "/images/about/icon-children.png", bg: "linear-gradient(135deg,#ffc58f,#ff9f6b)", border: "#ff9f6b" },
-  { label: "창작 프로젝트", value: 219, unit: "개", note: "", icon: "🎨", bg: "#fff1c4", border: "#ffd400" },
+  { label: "창작 프로젝트", value: 219, unit: "개", note: "", icon: "/images/about/icon-projects.png", bg: "#fff1c4", border: "#ffd400" },
 ];
 
 const SMALL_STATS = [
