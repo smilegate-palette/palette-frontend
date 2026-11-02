@@ -491,6 +491,7 @@ export default function AdminPage() {
                           try {
                             await deleteAdminComment(userId, comment.projectId, comment.id);
                             setComments((prev) => (prev ?? []).filter((item) => item.id !== comment.id));
+                            window.alert("댓글이 삭제됐어요.");
                           } catch {
                             setError("댓글 삭제에 실패했어요.");
                           }

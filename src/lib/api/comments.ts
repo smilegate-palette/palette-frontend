@@ -14,9 +14,6 @@ import { getStoredUserId } from "@/lib/auth/token";
 // ⚠️ 응답 스키마가 Swagger에 제네릭 object로만 나와 있어 정확한 필드명은 추정치입니다.
 //    실제 데이터 확인되면 아래 mapCommentResponse만 고치면 됩니다.
 
-// 비회원용 user_id 값 (경로에 문자열 "null"로 들어감 - 백엔드와 합의된 방식)
-const GUEST_USER_ID = "null";
-
 function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Comment {
   return {
     id: String(raw.id ?? raw.comment_id ?? `comment-${Date.now()}`),
@@ -39,6 +36,7 @@ export async function getComments(projectId: string): Promise<Comment[]> {
   if (USE_MOCK) {
     return mockComments.filter((c) => c.projectId === projectId);
   }
+
   const raw = await apiFetch<Record<string, unknown>[] | Record<string, unknown>>(
     `/api/comment/${projectId}`
   );
@@ -63,18 +61,24 @@ export async function createComment(
     return newComment;
   }
 
-  // 2026.10 백엔드 답변: 비회원은 user_id 자리에 null을 보내면 서버가 임의 값을 넣어 저장함.
-  const userId = getStoredUserId() ?? GUEST_USER_ID;
+  const userId = getStoredUserId();
+  const projectPath = `/api/comment/${encodeURIComponent(payload.projectId)}`;
 
-  const raw = await apiFetch<Record<string, unknown> | undefined>(
-    `/api/comment/${payload.projectId}/${encodeURIComponent(userId)}`,
-    {
-      method: "POST",
-      body: JSON.stringify({ content: payload.content, nickname: payload.authorName }),
-    }
-  );
+  // 회원은 ID를 포함하고, 비회원은 user_id 경로를 생략합니다.
+  const url = userId && userId !== "null"
+    ? `${projectPath}/${encodeURIComponent(userId)}`
+    : projectPath;
+
+  const raw = await apiFetch<Record<string, unknown> | undefined>(url, {
+    method: "POST",
+    body: JSON.stringify({
+      content: payload.content,
+      nickname: payload.authorName,
+    }),
+  });
+
   const mapped = mapCommentResponse(raw ?? {}, payload.projectId);
-  // 서버 응답이 비어있는 케이스(제네릭 object라 확실치 않음) 대비, 방금 입력한 내용으로 보완
+
   return {
     ...mapped,
     authorName: mapped.authorName !== "익명" ? mapped.authorName : payload.authorName ?? "익명",

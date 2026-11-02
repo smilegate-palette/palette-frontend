@@ -322,7 +322,6 @@ export default function AboutPalettePage() {
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   return (
-<<<<<<< Updated upstream
     <div className="px-4 py-6 md:px-6 md:py-10">
       {/* 히어로 */}
       <section className="mx-auto mb-14 max-w-[1290px] md:mb-20 3xl:max-w-[1800px]">
@@ -330,19 +329,6 @@ export default function AboutPalettePage() {
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
         <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-[2.5vw]">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
-=======
-    <div className="mx-auto max-w-3xl px-6 py-12">
-      <section className="mb-12 text-center">
-        <p className="mb-2 text-xs uppercase tracking-widest text-palette-muted">
-          ABOUT PALETTE
-        </p>
-        <h1 className="text-3xl font-bold leading-snug">
-          나의 색깔을 찾아가는
-          <br />
-          창의 커뮤니티,
-          <br />
-          팔레트
->>>>>>> Stashed changes
         </h1>
         <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
