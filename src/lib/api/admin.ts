@@ -150,7 +150,7 @@ export async function getAdminComments(
   userId: string,
   projectIdsByTitle: Map<string, string> = new Map()
 ): Promise<Comment[]> {
-  const raw = await apiFetch<unknown>(`/api/admin/${encodeURIComponent(userId)}/comment/`);
+  const raw = await apiFetch<unknown>(`/api/admin/${encodeURIComponent(userId)}/comment`);
   return extractArray(raw, ["comments", "items", "content"]).map((comment) => ({
     id: String(comment.id ?? comment.comment_id ?? ""),
     projectId: String(
@@ -213,20 +213,23 @@ function extractSections(raw: unknown): CurationSection[] {
     : [];
   if (!Array.isArray(list)) return [];
   return (list as Record<string, unknown>[]).map((s) => {
-    const sectionProjects = Array.isArray(s.sectionProjects)
-      ? s.sectionProjects.map(asRecord)
+    const rawSectionProjects = s.sectionProjects ?? s.section_projects;
+    const sectionProjects = Array.isArray(rawSectionProjects)
+      ? rawSectionProjects.map(asRecord)
       : [];
     const projectTitles = Object.fromEntries(
       sectionProjects.map((project) => [
-        String(project.projectId ?? ""),
-        String(project.projectTitle ?? ""),
+        String(project.projectId ?? project.project_id ?? ""),
+        String(project.projectTitle ?? project.project_title ?? ""),
       ])
     );
     return {
       sectionId: Number(s.section_id ?? s.sectionId ?? 0),
       title: (s.title as string) ?? (s.name as string) ?? "",
       projectIds: (
-        (s.project_ids ?? s.projectIds ?? sectionProjects.map((project) => project.projectId)) as
+        (s.project_ids ??
+          s.projectIds ??
+          sectionProjects.map((project) => project.projectId ?? project.project_id)) as
           (number | string)[]
       ).map(Number),
       projectTitles,
@@ -241,12 +244,11 @@ export async function getCuration(userId: string): Promise<CurationSection[]> {
 
 export async function saveCurationOrder(
   userId: string,
-  sectionId: number,
   projectIds: number[]
 ): Promise<void> {
   await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/curation`, {
     method: "POST",
-    body: JSON.stringify({ section_id: sectionId, projectIds }),
+    body: JSON.stringify({ section_id: 1, projectIds }),
   });
 }
 

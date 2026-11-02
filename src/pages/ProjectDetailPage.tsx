@@ -13,13 +13,14 @@ import { useAuth } from "@/lib/auth/AuthContext";
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { userId } = useAuth();
+  const { userId, role } = useAuth();
   const [project, setProject] = useState<Project | undefined | null>(null); // null = 로딩중
   const [comments, setComments] = useState<Comment[]>([]);
   // PROJECT 목록처럼 비로그인 상태에서 401/403이 날 수 있어서 별도로 구분해서 안내
   const [authError, setAuthError] = useState(false);
 
   const isOwner = Boolean(project?.ownerId && project.ownerId === userId);
+  const isAdmin = role === "ADMIN";
 
   const handleEdit = async () => {
     if (!project) return;
@@ -100,20 +101,20 @@ export default function ProjectDetailPage() {
         <h1 className="text-lg font-bold md:text-3xl">{project.title}</h1>
         <div className="flex items-center gap-2">
           {isOwner && (
-            <>
-              <button
-                onClick={handleEdit}
-                className="rounded-lg border border-palette-border px-2.5 py-1.5 text-xs text-palette-muted"
-              >
-                수정
-              </button>
-              <button
-                onClick={handleDelete}
-                className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-500"
-              >
-                삭제
-              </button>
-            </>
+            <button
+              onClick={handleEdit}
+              className="rounded-lg border border-palette-border px-2.5 py-1.5 text-xs text-palette-muted"
+            >
+              수정
+            </button>
+          )}
+          {(isOwner || isAdmin) && (
+            <button
+              onClick={handleDelete}
+              className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs text-red-500"
+            >
+              삭제
+            </button>
           )}
           <LikeButton projectId={project.id} initialCount={project.likeCount ?? 0} />
         </div>
