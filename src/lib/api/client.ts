@@ -69,5 +69,12 @@ export async function apiFetch<T>(
 
   // 200 성공 응답 바디가 없는 케이스(204 등) 대비
   const text = await res.text();
-  return text ? (JSON.parse(text) as T) : (undefined as T);
+  if (!text) return undefined as T;
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    // 일부 성공 응답은 JSON이 아닌 일반 텍스트일 수 있음.
+    return text as T;
+  }
 }
