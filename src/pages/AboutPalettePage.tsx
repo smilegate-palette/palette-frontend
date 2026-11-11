@@ -322,15 +322,17 @@ export default function AboutPalettePage() {
   const [heroImageFailed, setHeroImageFailed] = useState(false);
 
   return (
-    <div className="px-4 py-6 md:px-6 md:py-10">
+    // 풀스크린(2560px) 시안은 데스크탑(1440px) 시안을 약 1.78배로 키운 것과 같은 구성이라,
+    // 2000px 이상에서는 페이지 전체를 1.6배 확대(zoom)해서 시안 비율을 맞췄어요.
+    <div className="px-4 py-6 md:px-6 md:py-10 3xl:[zoom:1.6]">
       {/* 히어로 */}
-      <section className="mx-auto mb-14 max-w-[1290px] md:mb-20 3xl:max-w-[1800px]">
+      <section className="mx-auto mb-10 max-w-[1290px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
-        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-[2.5vw]">
+        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-[2.5vw] 3xl:text-[1.56vw]">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
-        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6]">
+        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6] 3xl:text-[1.21vw]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
@@ -352,10 +354,11 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트가 만드는 창의환경 - 카테고리 4개 탭 + 클릭 시 하단에 상세 목록 등장 */}
-      <section className="mx-auto max-w-[1290px] 3xl:max-w-[1800px]">
-        <h2 className="mb-6 text-lg font-bold md:mb-8 md:text-2xl">팔레트가 만드는 창의환경</h2>
+      <section className="mx-auto max-w-[1290px]">
+        <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트가 만드는 창의환경</h2>
 
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-6">
+        {/* 모바일 시안(138:286)도 카드 4개를 한 줄에 작게 보여줘서 모바일에서도 4열 유지 */}
+        <div className="grid grid-cols-4 gap-1.5 md:gap-6">
           {CATEGORIES.map((category) => {
             const isActive = category.key === activeKey;
             return (
@@ -363,16 +366,16 @@ export default function AboutPalettePage() {
                 key={category.key}
                 type="button"
                 onClick={() => setActiveKey(isActive ? null : category.key)}
-                className="rounded-2xl bg-white p-4 text-left transition-colors md:rounded-3xl md:p-6"
+                className="flex flex-col items-center rounded-lg border-2 bg-white p-1.5 text-center transition-colors md:rounded-3xl md:border-4 md:p-6"
                 style={{
                   boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.25)",
-                  border: isActive ? `4px solid ${category.color}` : "4px solid transparent",
+                  borderColor: isActive ? category.color : "transparent",
                   backgroundColor: isActive ? category.bg : "#ffffff",
                 }}
               >
-                <p className="text-2xl md:text-3xl">{category.icon}</p>
-                <p className="mt-2 text-base font-semibold md:mt-3 md:text-2xl">{category.label}</p>
-                <p className="mt-1 text-xs text-palette-muted md:text-base">{category.summary}</p>
+                <p className="text-xl md:text-5xl">{category.icon}</p>
+                <p className="mt-1 text-[10px] font-semibold leading-tight md:mt-3 md:text-2xl">{category.label}</p>
+                <p className="mt-0.5 text-[7px] leading-tight text-palette-muted md:mt-2 md:text-base">{category.summary}</p>
               </button>
             );
           })}
@@ -380,28 +383,32 @@ export default function AboutPalettePage() {
 
         {activeCategory && (
           <div
-            className="mt-4 rounded-2xl bg-white p-5 md:mt-6 md:rounded-[20px] md:p-8"
+            className="mt-2 rounded-xl bg-white p-2.5 md:mt-6 md:rounded-[20px] md:p-8"
             style={{ boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.25)" }}
           >
-            <ul className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
+            {/* 항목 수(2~3개)만큼 한 줄로 나눠 보여줌 - 모바일 시안도 한 줄 유지 */}
+            <ul
+              className="grid gap-2 md:gap-8"
+              style={{ gridTemplateColumns: `repeat(${activeCategory.details.length}, minmax(0, 1fr))` }}
+            >
               {activeCategory.details.map((detail, i) => (
-                <li key={detail.title} className="flex flex-col items-center gap-1.5 text-center">
+                <li key={detail.title} className="flex flex-col items-center gap-1 text-center md:gap-1.5">
                   {detail.image && (
-                    <img src={detail.image} alt={detail.title} className="mb-2 aspect-[3/2] w-full rounded-xl object-cover" />
+                    <img src={detail.image} alt={detail.title} className="mb-1 aspect-[3/2] w-full rounded-md object-cover md:mb-2 md:rounded-xl" />
                   )}
                   <span
-                    className="mb-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
+                    className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white md:mb-1 md:h-8 md:w-8 md:text-sm"
                     style={{ backgroundColor: activeCategory.color }}
                   >
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   {detail.role && (
-                    <p className="text-xs font-medium text-palette-muted md:text-sm">{detail.role}</p>
+                    <p className="text-[8px] font-medium text-palette-muted md:text-sm">{detail.role}</p>
                   )}
-                  <p className={detail.role ? "text-lg font-extrabold md:text-2xl" : "text-base font-semibold md:text-lg"}>
+                  <p className={detail.role ? "text-[11px] font-extrabold leading-tight md:text-2xl" : "text-[10px] font-semibold leading-tight md:text-lg"}>
                     {detail.title}
                   </p>
-                  <p className="text-xs leading-relaxed text-palette-muted md:text-sm">
+                  <p className="text-[7px] leading-snug text-palette-muted md:text-sm md:leading-relaxed">
                     {detail.description}
                   </p>
                 </li>
@@ -412,40 +419,41 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트 프로그램 */}
-      <section className="mx-auto mt-14 max-w-[1290px] 3xl:max-w-[1800px] md:mt-20">
-        <h2 className="mb-6 text-lg font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
+      <section className="mx-auto mt-10 max-w-[1290px] md:mt-20">
+        <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
+        {/* 모바일 시안도 3열(작게)이라 모바일에서도 3열 유지 */}
+        <ul className="grid grid-cols-3 gap-1.5 md:gap-6">
           {PROGRAMS.map((program) => (
             <li
               key={program.name}
-              className="relative overflow-hidden rounded-2xl bg-white"
+              className="relative overflow-hidden rounded-lg bg-white md:rounded-2xl"
               style={{ boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.25)" }}
             >
               <img src={program.image} alt={program.name} className="aspect-[16/9] w-full object-cover" />
-              <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold md:text-sm">
+              <span className="absolute left-1 top-1 rounded-full bg-white px-1.5 py-0.5 text-[7px] font-semibold md:left-3 md:top-3 md:px-3 md:py-1 md:text-sm">
                 {program.period}
               </span>
-              <div className="p-4 md:p-5">
-                <p className="text-base font-bold md:text-xl">{program.name}</p>
-                <p className="mt-0.5 text-xs font-semibold text-palette-muted md:text-sm">
+              <div className="p-1.5 md:p-5">
+                <p className="text-[10px] font-bold leading-tight md:text-xl">{program.name}</p>
+                <p className="mt-0.5 text-[7px] font-semibold leading-tight text-palette-muted md:text-sm">
                   {program.subtitle}
                 </p>
-                <p className="mt-2 text-xs leading-relaxed text-palette-muted md:text-sm">
+                <p className="mt-1 text-[7px] leading-snug text-palette-muted md:mt-2 md:text-sm md:leading-relaxed">
                   {program.description}
                 </p>
                 {/* 두 버튼 모두 이동할 대상(프로그램별 프로젝트/스토리 필터)이 아직 정해지지 않아서 연결 전이에요 */}
-                <div className="mt-4 flex gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-1 md:mt-4 md:gap-2">
                   <button
                     type="button"
                     disabled
-                    className="rounded-full bg-[#ececec] px-3 py-1.5 text-xs font-semibold opacity-70"
+                    className="rounded-full bg-[#ececec] px-1.5 py-0.5 text-[7px] font-semibold opacity-70 md:px-3 md:py-1.5 md:text-xs"
                   >
                     Story 보기
                   </button>
                   <button
                     type="button"
                     disabled
-                    className="rounded-full bg-[#ffd400] px-3 py-1.5 text-xs font-semibold opacity-70"
+                    className="rounded-full bg-[#ffd400] px-1.5 py-0.5 text-[7px] font-semibold opacity-70 md:px-3 md:py-1.5 md:text-xs"
                   >
                     창작 프로젝트 보기
                   </button>
@@ -457,7 +465,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* IMPACT - "팔레트가 함께 만든 변화" (2026.10 시안) */}
-      <section className="mx-auto mt-14 max-w-[1290px] 3xl:max-w-[1800px] md:mt-20">
+      <section className="mx-auto mt-10 max-w-[1290px] md:mt-20">
         <h2 className="mb-4 text-lg font-bold md:mb-6 md:text-3xl">IMPACT</h2>
         <h3 className="mb-3 text-base font-bold md:mb-5 md:text-2xl">팔레트가 함께 만든 변화</h3>
 
@@ -473,7 +481,7 @@ export default function AboutPalettePage() {
                 <Icon src={stat.icon} className="h-10 w-10 object-contain text-2xl md:h-24 md:w-24 md:text-5xl" />
               </div>
               <p className="mt-2 md:mt-6">
-                <span className="text-3xl font-extrabold md:text-7xl 3xl:text-8xl">
+                <span className="text-3xl font-extrabold md:text-7xl">
                   <CountUp value={stat.value} />
                 </span>
                 <span className="ml-1 text-sm font-bold md:text-3xl">{stat.unit}</span>
@@ -483,20 +491,20 @@ export default function AboutPalettePage() {
           ))}
         </div>
 
-        <div className="mt-6 grid grid-cols-2 gap-y-6 border-y border-palette-border py-6 md:mt-10 md:grid-cols-4 md:py-10">
+        <div className="mt-6 grid grid-cols-4 gap-y-6 border-y border-palette-border py-4 md:mt-10 md:py-10">
           {SMALL_STATS.map((stat, i) => (
             <div
               key={stat.label}
               className={`flex flex-col items-center text-center ${i > 0 ? "md:border-l md:border-palette-border" : ""}`}
             >
-              <Icon src={stat.icon} className="h-14 w-14 object-contain text-4xl md:h-24 md:w-24 md:text-6xl" />
+              <Icon src={stat.icon} className="h-9 w-9 object-contain text-3xl md:h-24 md:w-24 md:text-6xl" />
               <p className="mt-2 md:mt-3">
-                <span className="text-2xl font-extrabold md:text-5xl">
+                <span className="text-base font-extrabold md:text-5xl">
                   <CountUp value={stat.value} />
                 </span>
-                <span className="ml-1 text-xs font-bold md:text-xl">{stat.unit}</span>
+                <span className="ml-0.5 text-[9px] font-bold md:ml-1 md:text-xl">{stat.unit}</span>
               </p>
-              <p className="mt-1 text-[11px] text-palette-muted md:text-base">{stat.label}</p>
+              <p className="mt-0.5 text-[8px] text-palette-muted md:mt-1 md:text-base">{stat.label}</p>
             </div>
           ))}
         </div>

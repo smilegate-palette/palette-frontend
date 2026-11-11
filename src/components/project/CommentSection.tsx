@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Comment } from "@/lib/types/comment";
 import { createComment } from "@/lib/api/comments";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 // 2026.10 기획/백엔드 답변 반영: 비회원도 로그인 없이 닉네임만 입력해 댓글 작성 가능
 // (로그인 안 했으면 user_id를 "null"로 보내고, 서버가 임의 값으로 저장).
@@ -15,19 +16,20 @@ export default function CommentSection({
   initialComments: Comment[];
 }) {
   const [comments, setComments] = useState(initialComments);
-  const [nickname, setNickname] = useState("");
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { email } = useAuth();
 
   const handleSubmit = async () => {
-    if (!content.trim() || !nickname.trim()) return;
+    if (!content.trim() || submitting) return;
     setSubmitting(true);
     setError(null);
     try {
+      // 닉네임 입력칸이 없어져서: 로그인했으면 이메일 앞부분, 비회원이면 비워서 보냄(서버가 임의 이름 부여, 확인 필요)
       const newComment = await createComment({
         projectId,
-        authorName: nickname,
+        authorName: email ? email.split("@")[0] : undefined,
         content,
       });
       setComments((prev) => [...prev, newComment]);
@@ -43,23 +45,21 @@ export default function CommentSection({
     <section className="mt-8 md:mt-12">
       <h2 className="mb-3 text-base font-bold md:mb-4 md:text-2xl">댓글 {comments.length}개</h2>
 
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row md:mb-6">
-          <input
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            placeholder="닉네임"
-            className="rounded-xl bg-palette-input px-4 py-2 text-sm text-black outline-none placeholder:text-palette-muted sm:w-32 md:py-3"
-          />
+        {/* Figma(2026.11) 댓글 입력은 닉네임 칸 없이 입력창 1개 + 등록 버튼 */}
+        <div className="mb-4 flex gap-2 md:mb-6 md:gap-3">
           <input
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) handleSubmit();
+            }}
             placeholder="댓글을 입력하세요"
-            className="flex-1 rounded-xl bg-palette-input px-4 py-2 text-sm text-black shadow-soft outline-none placeholder:text-palette-muted md:py-3"
+            className="min-w-0 flex-1 rounded-xl bg-palette-input px-4 py-2 text-sm text-black shadow-soft outline-none placeholder:text-palette-muted md:px-7 md:py-3 md:text-xl"
           />
           <button
             onClick={handleSubmit}
-            disabled={submitting || !content.trim() || !nickname.trim()}
-            className="rounded-xl bg-palette-accent px-4 py-2 text-sm font-semibold text-white shadow-soft disabled:opacity-50 md:py-3"
+            disabled={submitting || !content.trim()}
+            className="shrink-0 rounded-xl bg-palette-accent px-4 py-2 text-sm font-semibold text-white shadow-soft disabled:opacity-50 md:px-8 md:py-3 md:text-xl"
           >
             등록
           </button>
