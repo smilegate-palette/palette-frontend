@@ -36,11 +36,11 @@ export default function Footer() {
         </div>
 
         {/* 카피라이트 + 크레딧 */}
-        <div className="min-w-0 flex-1 md:max-w-[689px] 3xl:max-w-[48vw]">
-          <p className="text-[9px] font-medium leading-tight md:text-[30px] 3xl:text-[1.95vw]">
+        <div className="min-w-0 flex-1 xl:whitespace-nowrap">
+          <p className="text-[9px] font-medium leading-tight md:text-[22px] xl:text-[30px] 3xl:text-[1.95vw]">
             © 2023 Smilegate Foundation. All Rights Reserved.
           </p>
-          <div className="mt-1 text-[8px] font-medium leading-[11px] md:mt-6 md:text-[28px] md:leading-[40px] 3xl:text-[1.76vw] 3xl:leading-[2.8vw]">
+          <div className="mt-1 text-[8px] font-medium leading-[11px] md:mt-6 md:text-[20px] md:leading-[32px] xl:text-[28px] xl:leading-[40px] 3xl:text-[1.76vw] 3xl:leading-[2.8vw]">
             <p>PROJECT CREDITS</p>
             <p>기획 최현주 | 디자인 김향기 | 개발 FE 부수현 | 개발 BE 김채흔</p>
           </div>
@@ -52,7 +52,7 @@ export default function Footer() {
             type="button"
             onClick={() => setOpen((prev) => !prev)}
             aria-expanded={open}
-            className="flex w-[64px] items-center justify-between whitespace-nowrap rounded-[3px] bg-palette-accent px-[8px] py-[4px] text-[7.6px] font-semibold text-white md:w-[237px] md:rounded-[10px] md:pl-[41px] md:pr-[18px] md:py-[14px] md:text-[28px] 3xl:w-[16.5vw] 3xl:rounded-[0.7vw] 3xl:px-[2.8vw] 3xl:py-[1vw] 3xl:text-[1.95vw]"
+            className="flex min-w-[64px] items-center justify-between gap-2 whitespace-nowrap rounded-[3px] bg-palette-accent px-[8px] py-[4px] text-[7.6px] font-semibold text-white md:min-w-[237px] md:gap-4 md:rounded-[10px] md:px-[34px] md:py-[14px] md:text-[28px] 3xl:w-[16.5vw] 3xl:rounded-[0.7vw] 3xl:px-[2.8vw] 3xl:py-[1vw] 3xl:text-[1.95vw]"
           >
             Family Site
             <span aria-hidden className={`text-[8px] md:text-[28px] 3xl:text-[2.2vw] ${open ? "" : "rotate-180"}`}>
