@@ -78,13 +78,14 @@ export default function ProjectDetailPage() {
     return <NotFoundPage />;
   }
 
-  // Figma(node 12:333 데스크탑 / 52:645 모바일) 기준 색상 범례: 팀=노랑, 기관=빨강, 형태=청록, 참여자=초록
-  const metaLegend = [
-    { label: project.team, color: "bg-palette-accent" },
-    { label: project.organization, color: "bg-[#ff3c00]" },
-    { label: project.types.join(", "), color: "bg-[#1bdbea]" },
-    { label: project.participants?.join(", "), color: "bg-[#3ddc84]" },
-  ].filter((item): item is { label: string; color: string } => Boolean(item.label));
+  // Figma(2026.11) 시안: 색 네모 범례 대신 이모티콘(👥 팀 / 📍 기관 / 🎨 유형 / 👶 아이들)을 쓰고,
+  // 팀·기관·유형은 글자 길이와 상관없이 항상 같은 간격(gap)으로 이어 붙이며, 참여 아이들은 10명이 넘을 수 있어서 다음 줄에 둬요.
+  const metaItems = [
+    { emoji: "👥", label: project.team },
+    { emoji: "📍", label: project.organization },
+    { emoji: "🎨", label: project.types.join(", ") },
+  ].filter((item) => Boolean(item.label));
+  const participantsLabel = project.participants?.filter(Boolean).join(", ");
 
   // Figma 풀스크린 시안(node 90:500)을 보니 상세 페이지도 다른 페이지들처럼
   // 가운데 정렬된 좁은 컬럼이 아니라 좌우 여백만 있고 화면 끝까지 꽉 채우는 레이아웃이라
@@ -92,8 +93,8 @@ export default function ProjectDetailPage() {
   return (
     <div className="px-4 py-6 md:px-6 md:py-8">
       <div className="mb-3 flex flex-wrap gap-2">
-        <MetaChip label={project.program} />
         <MetaChip label={String(project.year)} />
+        <MetaChip label={project.program} />
         {project.region && <MetaChip label={project.region} />}
       </div>
 
@@ -120,14 +121,24 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      {metaLegend.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 md:mb-6">
-          {metaLegend.map((item, i) => (
-            <span key={i} className="flex items-center gap-1.5 text-xs text-palette-muted md:text-base">
-              <span className={`size-2.5 shrink-0 md:size-4 ${item.color}`} aria-hidden />
-              {item.label}
+      {(metaItems.length > 0 || participantsLabel) && (
+        <div className="mb-4 flex flex-col gap-1.5 md:mb-6 md:gap-3">
+          {metaItems.length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5">
+              {metaItems.map((item) => (
+                <span key={item.emoji} className="flex items-center gap-1.5 text-xs text-palette-muted md:text-xl">
+                  <span aria-hidden>{item.emoji}</span>
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          )}
+          {participantsLabel && (
+            <span className="flex items-start gap-1.5 text-xs text-palette-muted md:text-xl">
+              <span aria-hidden>👶</span>
+              {participantsLabel}
             </span>
-          ))}
+          )}
         </div>
       )}
 

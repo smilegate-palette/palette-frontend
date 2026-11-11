@@ -84,6 +84,7 @@ export async function getProjects(
         (p) =>
           p.title.toLowerCase().includes(kw) ||
           p.organization?.toLowerCase().includes(kw) ||
+          p.team?.toLowerCase().includes(kw) ||
           p.description?.toLowerCase().includes(kw) ||
           p.participants?.some((name) => name.toLowerCase().includes(kw))
       );

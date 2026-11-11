@@ -5,15 +5,16 @@ import { Link } from "react-router-dom";
 import {
   Project,
   ProjectListParams,
-  ProjectType,
-  PROJECT_TYPES,
   ProgramType,
 } from "@/lib/types/project";
 import ProjectGridCard from "@/components/common/ProjectGridCard";
 
 // 기획 문서 + Figma(node 8:63) 기준 확정된 필터 체계: 프로그램 / 연도 / 형태 / 지역 / 검색 + 정렬
 const YEAR_FILTERS = ["ALL", 2026, 2025, 2024, "~2023"] as const;
-const PROGRAM_FILTERS: ProgramType[] = ["창의워크숍", "유스파티"];
+const PROGRAM_FILTERS: ProgramType[] = ["유스파티", "창의워크숍"];
+// Figma(2026.11) 시안: 연도·프로그램 칩 아래에 지역 칩 한 줄. (형태 칩은 시안에서 빠지고 카드에 "프로젝트 종류"로만 표시)
+// ⚠️ 백엔드 GET /api/project에는 region 파라미터가 없어서 지역 필터는 받아온 목록에서 프론트가 걸러요.
+const REGION_FILTERS = ["서울", "경기 군포", "경기 성남", "경기 시흥", "경기 하남", "전북 전주", "강원 강릉", "대구", "부산"];
 
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -23,16 +24,16 @@ export default function ProjectListPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<(typeof YEAR_FILTERS)[number]>("ALL");
   const [programFilter, setProgramFilter] = useState<ProgramType | null>(null);
-  const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
+  const [regionFilter, setRegionFilter] = useState<string | null>(null);
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");
 
-  const hasActiveFilters = yearFilter !== "ALL" || programFilter || typeFilter || keyword;
+  const hasActiveFilters = yearFilter !== "ALL" || programFilter || regionFilter || keyword;
 
   const resetFilters = () => {
     setYearFilter("ALL");
     setProgramFilter(null);
-    setTypeFilter(null);
+    setRegionFilter(null);
     setKeyword("");
   };
 
@@ -40,7 +41,6 @@ export default function ProjectListPage() {
     const params: ProjectListParams = { sort };
     if (typeof yearFilter === "number") params.year = yearFilter;
     if (programFilter) params.program = programFilter;
-    if (typeFilter) params.type = typeFilter;
     // 컴포넌트 명세 기준: 최소 2자 이상 입력 시 검색 실행
     if (keyword.length >= 2) params.keyword = keyword;
 
@@ -48,7 +48,9 @@ export default function ProjectListPage() {
     setAuthError(false);
     setLoadError(null);
     getProjects(params)
-      .then((res) => setProjects(res.projects))
+      .then((res) =>
+        setProjects(regionFilter ? res.projects.filter((p) => p.region === regionFilter) : res.projects)
+      )
       .catch((err) => {
         // 백엔드가 로그인 여부를 먼저 확인하는 구조라, 비로그인 상태면 401/403이 날 수 있음
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
@@ -63,7 +65,7 @@ export default function ProjectListPage() {
         setProjects([]);
       })
       .finally(() => setLoading(false));
-  }, [yearFilter, programFilter, typeFilter, keyword, sort]);
+  }, [yearFilter, programFilter, regionFilter, keyword, sort]);
 
   const resultCountLabel = useMemo(
     () => (loading ? "불러오는 중..." : `${projects.length}개의 프로젝트를 찾았습니다`),
@@ -83,7 +85,8 @@ export default function ProjectListPage() {
         </Link>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-2">
+      {/* 시안: 연도(ALL~~2023)와 프로그램(유스파티/창의워크숍)이 한 줄에 이어서 나와요(좁으면 자연스럽게 줄바꿈) */}
+      <div className="mb-2 flex flex-wrap items-center gap-2 md:mb-3">
         {YEAR_FILTERS.map((year) => (
           <FilterChip
             key={String(year)}
@@ -92,9 +95,6 @@ export default function ProjectListPage() {
             onClick={() => setYearFilter(year)}
           />
         ))}
-      </div>
-
-      <div className="mb-3 flex flex-wrap gap-2">
         {PROGRAM_FILTERS.map((program) => (
           <FilterChip
             key={program}
@@ -106,12 +106,12 @@ export default function ProjectListPage() {
       </div>
 
       <div className="mb-3 flex flex-wrap gap-2">
-        {PROJECT_TYPES.map((type) => (
+        {REGION_FILTERS.map((region) => (
           <FilterChip
-            key={type}
-            label={type}
-            active={typeFilter === type}
-            onClick={() => setTypeFilter(typeFilter === type ? null : type)}
+            key={region}
+            label={region}
+            active={regionFilter === region}
+            onClick={() => setRegionFilter(regionFilter === region ? null : region)}
           />
         ))}
       </div>
@@ -141,7 +141,7 @@ export default function ProjectListPage() {
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            placeholder="프로젝트명, 참여자명으로 검색"
+            placeholder="기관명, 팀명, 프로젝트명, 참여자명으로 검색"
             className="min-w-0 flex-1 bg-transparent text-xs text-black outline-none placeholder:text-palette-muted md:text-sm"
           />
           <span aria-hidden>🔍</span>
