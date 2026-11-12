@@ -332,7 +332,7 @@ export default function AboutPalettePage() {
         <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
-        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:text-lg">
+        <div className="text-center text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:text-lg">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
