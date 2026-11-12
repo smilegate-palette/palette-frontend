@@ -329,10 +329,10 @@ export default function AboutPalettePage() {
       <section className="mx-auto mb-10 max-w-[1290px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
-        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-[2.5vw] 3xl:text-[1.56vw]">
+        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
-        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6] 3xl:text-[1.21vw]">
+        <div className="text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:text-lg">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
