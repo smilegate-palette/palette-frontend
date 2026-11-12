@@ -28,7 +28,6 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
     (raw.image_url as string) ??
     (raw.imageUrl as string) ??
     (raw.image as string) ??
-    (raw.media_url as string) ??
     "";
 
   return {
@@ -50,11 +49,11 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
     types: raw.category ? [raw.category as Project["types"][number]] : [],
     year: (raw.year as number) ?? new Date().getFullYear(),
     region: raw.region as string | undefined,
-    organization: raw.organization as string | undefined,
+    organization: (raw.organization ?? raw.organization_name ?? raw.organizationName) as string | undefined,
     team: raw.team as string | undefined,
     participants: (raw.participants as string[]) ?? [],
     thumbnailUrl,
-    mediaUrl: raw.media_url as string | undefined,
+    mediaUrl: (raw.media_url ?? raw.mediaUrl) as string | undefined,
     description: raw.description as string | undefined,
     // ProjectRequest 스키마엔 likeCount(camelCase)로 되어 있는데 다른 필드는 전부 snake_case라
     // 예외적인 케이스로 보임 - 혹시 몰라 like_count도 같이 확인함
@@ -101,7 +100,13 @@ export async function getProjects(
     return { projects: list, total: list.length };
   }
 
-  // 서버가 쿼리 파라미터를 받아주는지 아직 불확실하지만 일단 보내봄(무시해도 에러는 안 남).
+  return getProjectsFromApi(params);
+}
+
+export async function getProjectsFromApi(
+  params: ProjectListParams = {}
+): Promise<ProjectListResponse> {
+  // 관리자 큐레이션은 저장 API와 같은 실제 프로젝트 ID를 써야 하므로 이 함수를 직접 호출한다.
   const query = new URLSearchParams(
     Object.entries(params).reduce<Record<string, string>>((acc, [k, v]) => {
       if (v !== undefined) acc[k] = String(v);
@@ -142,11 +147,38 @@ export interface CreateProjectPayload {
   category: Project["types"][number] | "";
   region?: string;
   organization?: string;
+  team?: string;
   participants?: string[];
   description: string;
   mediaUrl?: string;
-  /** 서버가 별도 파일 업로드 API를 제공하지 않는 현재 계약에서는 data URL로 전송한다. */
+  /** Supabase Storage에 업로드된 공개 썸네일 URL */
   thumbnailUrl?: string;
+}
+
+export const MAX_THUMBNAIL_SIZE_BYTES = 10 * 1024 * 1024;
+const THUMBNAIL_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+
+export function validateThumbnailFile(file: File): string | null {
+  if (!THUMBNAIL_TYPES.has(file.type.toLowerCase())) {
+    return "PNG, JPEG, WEBP, GIF 이미지만 업로드할 수 있어요.";
+  }
+  if (file.size === 0 || file.size > MAX_THUMBNAIL_SIZE_BYTES) {
+    return "썸네일은 10MB 이하의 파일만 업로드할 수 있어요.";
+  }
+  return null;
+}
+
+export async function uploadProjectThumbnail(file: File): Promise<string> {
+  const validationError = validateThumbnailFile(file);
+  if (validationError) throw new Error(validationError);
+
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await apiFetch<{ url: string }>("/api/project/thumbnail", {
+    method: "POST",
+    body: formData,
+  });
+  return response.url;
 }
 
 export async function createProject(payload: CreateProjectPayload): Promise<void> {
@@ -159,6 +191,8 @@ export async function createProject(payload: CreateProjectPayload): Promise<void
     program_name: payload.program,
     year: payload.year,
     region: payload.region,
+    organization: payload.organization?.trim() || undefined,
+    team: payload.team?.trim() || undefined,
     participants: payload.participants ?? [], // 2026.09.06 백엔드가 오타(partipants) 고쳐줘서 같이 수정함
     description: payload.description,
     category: payload.category || undefined,

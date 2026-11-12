@@ -1,7 +1,12 @@
 import { FormEvent, KeyboardEvent, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { createProject } from "@/lib/api/projects";
+import {
+  createProject,
+  uploadProjectThumbnail,
+  validateThumbnailFile,
+} from "@/lib/api/projects";
+import { USE_MOCK } from "@/lib/api/client";
 import { ProgramType, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
 
 // Figma(node 60:2 데스크탑 / 63:343 모바일 "PROJECT 업로드 폼") 기준.
@@ -25,6 +30,7 @@ export default function UploadPage() {
   const [category, setCategory] = useState<ProjectType | "">("");
   const [region, setRegion] = useState("");
   const [organization, setOrganization] = useState("");
+  const [team, setTeam] = useState("");
   const [participantInput, setParticipantInput] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
   const [description, setDescription] = useState("");
@@ -59,8 +65,17 @@ export default function UploadPage() {
     list: string[],
     setList: (v: string[]) => void
   ) => {
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
     e.preventDefault();
+    addParticipant(value, setValue, list, setList);
+  };
+
+  const addParticipant = (
+    value: string,
+    setValue: (v: string) => void,
+    list: string[],
+    setList: (v: string[]) => void
+  ) => {
     const trimmed = value.trim();
     if (trimmed && !list.includes(trimmed)) setList([...list, trimmed]);
     setValue("");
@@ -68,6 +83,14 @@ export default function UploadPage() {
 
   const handleThumbnailChange = (file: File | undefined) => {
     if (!file) return;
+    const validationError = validateThumbnailFile(file);
+    if (validationError) {
+      setError(validationError);
+      setThumbnailFile(null);
+      setThumbnailPreview(null);
+      return;
+    }
+    setError(null);
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
   };
@@ -80,20 +103,34 @@ export default function UploadPage() {
       setError("필수 항목을 확인해주세요. (프로젝트명, 프로그램, 유형, 50자 이상 프로젝트 설명은 꼭 입력해야 해요)");
       return;
     }
+    const normalizedWebLink = mediaType === "link" ? normalizeWebLink(webLink) : undefined;
+    if (mediaType === "link" && webLink.trim() && !normalizedWebLink) {
+      setError("http 또는 https로 시작하는 올바른 웹 링크를 입력해주세요.");
+      return;
+    }
     setSubmitting(true);
     try {
-      // 파일 저장과 URL 변환은 백엔드에서 처리한다. 프론트는 선택한 파일을 data URL로 전달한다.
-      const thumbnailUrl = thumbnailFile ? await fileToDataUrl(thumbnailFile) : undefined;
+      const thumbnailUrl =
+        thumbnailFile && !USE_MOCK ? await uploadProjectThumbnail(thumbnailFile) : undefined;
+      const mediaUrl =
+        mediaType === "video"
+          ? videoUrl.trim() || undefined
+          : mediaType === "link"
+          ? normalizedWebLink
+          : mediaFile
+          ? await fileToDataUrl(mediaFile)
+          : undefined;
       await createProject({
         program,
         year,
         title,
         category,
         region: region || undefined,
-        organization: organization || undefined,
+        organization: organization.trim() || undefined,
+        team: team.trim() || undefined,
         participants,
         description,
-        mediaUrl: mediaType === "video" ? videoUrl : mediaType === "link" ? webLink : undefined,
+        mediaUrl,
         thumbnailUrl,
       });
       navigate("/project");
@@ -215,18 +252,40 @@ export default function UploadPage() {
                 className={inputClass}
               />
             </Field>
+            <Field label="팀명">
+              <input
+                value={team}
+                onChange={(e) => setTeam(e.target.value)}
+                placeholder="팀명 입력"
+                className={inputClass}
+              />
+            </Field>
           </div>
           <div className="mt-3 md:mt-4">
             <Field label="참여자 이름">
-              <input
-                value={participantInput}
-                onChange={(e) => setParticipantInput(e.target.value)}
-                onKeyDown={(e) =>
-                  addTag(e, participantInput, setParticipantInput, participants, setParticipants)
-                }
-                placeholder="참여자 이름 입력 후 엔터"
-                className={inputClass}
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  enterKeyHint="done"
+                  value={participantInput}
+                  onChange={(e) => setParticipantInput(e.target.value)}
+                  onKeyDown={(e) =>
+                    addTag(e, participantInput, setParticipantInput, participants, setParticipants)
+                  }
+                  placeholder="참여자 이름 입력 후 엔터"
+                  className={inputClass}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    addParticipant(participantInput, setParticipantInput, participants, setParticipants)
+                  }
+                  disabled={!participantInput.trim()}
+                  className="shrink-0 rounded-lg bg-palette-muted px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50 md:rounded-xl md:px-5 md:py-3"
+                >
+                  추가
+                </button>
+              </div>
             </Field>
           </div>
           <TagList
@@ -315,7 +374,7 @@ export default function UploadPage() {
               )}
               <input
                 type="file"
-                accept="image/*"
+                accept="image/png,image/jpeg,image/webp,image/gif"
                 className="hidden"
                 onChange={(e) => handleThumbnailChange(e.target.files?.[0])}
               />
@@ -353,6 +412,18 @@ function fileToDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(new Error("썸네일 파일을 읽지 못했습니다. 다시 선택해 주세요."));
     reader.readAsDataURL(file);
   });
+}
+
+function normalizeWebLink(value: string): string | undefined {
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(candidate);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 const inputClass =

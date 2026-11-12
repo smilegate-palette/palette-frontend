@@ -33,11 +33,12 @@ export async function apiFetch<T>(
   // (로그인 자체 요청인 /api/login, /api/signup 계열은 어차피 로그인 전이라 토큰이 없어서 안 붙음)
   const token = getToken();
   const isGet = (options.method ?? "GET").toUpperCase() === "GET";
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
 
   let res = await fetch(`${API_BASE_URL}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options.headers,
     },
@@ -51,7 +52,10 @@ export async function apiFetch<T>(
     void _drop;
     res = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
-      headers: { "Content-Type": "application/json", ...rest },
+      headers: {
+        ...(!isFormData ? { "Content-Type": "application/json" } : {}),
+        ...rest,
+      },
     });
   }
 

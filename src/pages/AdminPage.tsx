@@ -4,16 +4,22 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   getAdminDashboard,
+  getAdminProjectDetail,
   getAdminComments,
   deleteAdminComment,
   approveProject,
   rejectProject,
   updateAdminProject,
   saveCurationOrder,
+  createStory,
+  updateStory,
+  deleteStory,
+  getStories,
   CurationSection,
   AdminStory,
   AdminStats,
 } from "@/lib/api/admin";
+import { getProjectsFromApi, uploadProjectThumbnail, validateThumbnailFile } from "@/lib/api/projects";
 import { Comment } from "@/lib/types/comment";
 import { ApiError } from "@/lib/api/client";
 import { Project, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
@@ -43,6 +49,13 @@ export default function AdminPage() {
   const [totalProjectCount, setTotalProjectCount] = useState(0);
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [stories, setStories] = useState<AdminStory[]>([]);
+  const [storyTitle, setStoryTitle] = useState("");
+  const [storyUsername, setStoryUsername] = useState("");
+  const [storyThumbnailFile, setStoryThumbnailFile] = useState<File | null>(null);
+  const [storyThumbnailPreview, setStoryThumbnailPreview] = useState("");
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+  const [savingStory, setSavingStory] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
@@ -55,10 +68,17 @@ export default function AdminPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editCategory, setEditCategory] = useState<ProjectType | "">("");
   const [editDescription, setEditDescription] = useState("");
+  const [editOrganization, setEditOrganization] = useState("");
+  const [editParticipants, setEditParticipants] = useState("");
+  const [editMediaUrl, setEditMediaUrl] = useState("");
+  const [editThumbnailFile, setEditThumbnailFile] = useState<File | null>(null);
+  const [editThumbnailPreview, setEditThumbnailPreview] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
 
   const [sections, setSections] = useState<CurationSection[] | null>(null);
   const [curationProjects, setCurationProjects] = useState<{ id: number; title: string }[]>([]);
+  const [availableProjects, setAvailableProjects] = useState<Project[]>([]);
+  const [showCurationList, setShowCurationList] = useState(false);
   const [curationError, setCurationError] = useState<string | null>(null);
   const [savingCuration, setSavingCuration] = useState(false);
   const [draggedProjectId, setDraggedProjectId] = useState<number | null>(null);
@@ -67,15 +87,34 @@ export default function AdminPage() {
   const load = async (uid: string) => {
     setError(null);
     try {
-      const dashboard = await getAdminDashboard(uid);
+      const [dashboardResult, storiesResult, projectListResult] = await Promise.allSettled([
+        getAdminDashboard(uid),
+        getStories(),
+        getProjectsFromApi(),
+      ]);
+      if (dashboardResult.status === "rejected") throw dashboardResult.reason;
+      const dashboard = dashboardResult.value;
       setProjects(dashboard.pendingProjects);
       setTotalProjectCount(dashboard.totalCount ?? dashboard.allProjects.length);
       setStories(dashboard.stories);
       setStats(dashboard.stats ?? null);
       setSections(dashboard.curation);
-      setCurationProjects(flattenCurationProjects(dashboard.curation));
+      setCurationProjects(flattenCurationProjects(dashboard.curation).slice(0, 3));
       setCurationError(null);
       setComments(null);
+      if (storiesResult.status === "fulfilled") {
+        setStories(storiesResult.value);
+        setStoryError(null);
+      } else {
+        setStories([]);
+        setStoryError("스토리 목록을 불러오지 못했어요.");
+      }
+      if (projectListResult.status === "fulfilled") {
+        setAvailableProjects(projectListResult.value.projects);
+      } else {
+        setAvailableProjects([]);
+        setCurationError("전체 프로젝트 목록을 불러오지 못했어요.");
+      }
     } catch (err) {
       if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
         setError("관리자 권한이 없어요. (일반 계정은 이 페이지를 이용할 수 없어요)");
@@ -157,12 +196,33 @@ export default function AdminPage() {
     }
   };
 
-  const startEdit = (project: Project) => {
+  const startEdit = async (project: Project) => {
     setEditing(project);
     setEditTitle(project.title);
     setEditCategory(project.types[0] ?? "");
     setEditDescription(project.description ?? "");
+    setEditOrganization(project.organization ?? "");
+    setEditParticipants(project.participants?.join(", ") ?? "");
+    setEditMediaUrl(project.mediaUrl ?? "");
+    setEditThumbnailFile(null);
+    setEditThumbnailPreview(project.thumbnailUrl ?? "");
     setEditError(null);
+
+    if (!userId) return;
+    try {
+      const details = await getAdminProjectDetail(userId, project.id);
+      if (!details) return;
+      setEditing((current) => current?.id === project.id ? details : current);
+      setEditTitle(details.title || project.title);
+      setEditCategory(details.types[0] ?? project.types[0] ?? "");
+      setEditDescription(details.description ?? project.description ?? "");
+      setEditOrganization(details.organization ?? project.organization ?? "");
+      setEditParticipants(details.participants?.join(", ") ?? project.participants?.join(", ") ?? "");
+      setEditMediaUrl(details.mediaUrl ?? project.mediaUrl ?? "");
+      setEditThumbnailPreview(details.thumbnailUrl || project.thumbnailUrl || "");
+    } catch {
+      setEditError("프로젝트 상세 정보를 불러오지 못했어요.");
+    }
   };
 
   const submitEdit = async () => {
@@ -177,6 +237,10 @@ export default function AdminPage() {
         title: editTitle,
         category: editCategory,
         description: editDescription,
+        organization: editOrganization,
+        participants: editParticipants.split(",").map((name) => name.trim()).filter(Boolean),
+        mediaUrl: editMediaUrl,
+        thumbnailFile: editThumbnailFile,
       });
       setEditing(null);
       await load(userId);
@@ -200,6 +264,24 @@ export default function AdminPage() {
     });
   };
 
+  const toggleCurationProject = (project: Project) => {
+    const projectId = Number(project.id);
+    if (!Number.isSafeInteger(projectId) || projectId <= 0) return;
+
+    const isSelected = curationProjects.some((item) => item.id === projectId);
+    if (isSelected) {
+      setCurationProjects((current) => current.filter((item) => item.id !== projectId));
+      setCurationError(null);
+      return;
+    }
+    if (curationProjects.length >= 3) {
+      setCurationError("큐레이션 프로젝트는 최대 3개까지 선택할 수 있어요.");
+      return;
+    }
+    setCurationProjects((current) => [...current, { id: projectId, title: project.title }]);
+    setCurationError(null);
+  };
+
   const saveCuration = async () => {
     if (!userId) return;
     setSavingCuration(true);
@@ -210,6 +292,65 @@ export default function AdminPage() {
       setCurationError("큐레이션 순서 저장에 실패했어요.");
     } finally {
       setSavingCuration(false);
+    }
+  };
+
+  const resetStoryForm = () => {
+    setEditingStoryId(null);
+    setStoryTitle("");
+    setStoryUsername("");
+    setStoryThumbnailFile(null);
+    setStoryThumbnailPreview("");
+    setStoryError(null);
+  };
+
+  const editStory = (story: AdminStory) => {
+    setEditingStoryId(story.id);
+    setStoryTitle(story.title);
+    setStoryUsername(story.username ?? "");
+    setStoryThumbnailFile(null);
+    setStoryThumbnailPreview(story.thumbnailUrl ?? "");
+    setStoryError(null);
+  };
+
+  const submitStory = async () => {
+    if (!userId || !storyTitle.trim() || !storyUsername.trim()) {
+      setStoryError("스토리 제목과 이름을 입력해주세요.");
+      return;
+    }
+    setSavingStory(true);
+    setStoryError(null);
+    try {
+      const thumbnailUrl = storyThumbnailFile
+        ? await uploadProjectThumbnail(storyThumbnailFile)
+        : storyThumbnailPreview || undefined;
+      const payload = {
+        title: storyTitle.trim(),
+        username: storyUsername.trim(),
+        thumbnailUrl,
+      };
+      if (editingStoryId) {
+        await updateStory(userId, editingStoryId, payload);
+      } else {
+        await createStory(userId, payload);
+      }
+      setStories(await getStories());
+      resetStoryForm();
+    } catch (err) {
+      setStoryError(err instanceof Error ? err.message : "스토리 저장에 실패했어요.");
+    } finally {
+      setSavingStory(false);
+    }
+  };
+
+  const removeStory = async (story: AdminStory) => {
+    if (!userId || !window.confirm(`"${story.title}" 스토리를 삭제할까요?`)) return;
+    try {
+      await deleteStory(userId, story.id);
+      setStories((current) => current.filter((item) => item.id !== story.id));
+      if (editingStoryId === story.id) resetStoryForm();
+    } catch {
+      setStoryError("스토리 삭제에 실패했어요.");
     }
   };
 
@@ -415,29 +556,65 @@ export default function AdminPage() {
                 />
               </Field>
             </div>
-            {/* Figma엔 썸네일 업로드/추가 필드도 있는데, 저장할 백엔드 필드가 없어서
-                화면만 두고 실제 저장은 안 됩니다. */}
             <div className="mt-3 md:mt-4">
-              <p className="mb-1.5 text-xs text-palette-muted md:text-base">
-                썸네일 이미지 (준비중 - 아직 저장 안 됨)
-              </p>
-              <button
-                type="button"
-                disabled
-                className="rounded-lg bg-palette-placeholder px-4 py-2 text-xs text-white/70"
-              >
-                이미지 업로드
-              </button>
-            </div>
-            <div className="mt-3 md:mt-4">
-              <Field label="추가 필드 (준비중 - 아직 저장 안 됨)">
+              <Field label="소속 기관명">
                 <input
-                  disabled
-                  placeholder="'팀원 정보', '프로젝트 URL' 등의 추가 입력 필드"
-                  className={`${inputClass} opacity-60`}
+                  value={editOrganization}
+                  onChange={(e) => setEditOrganization(e.target.value)}
+                  className={inputClass}
                 />
               </Field>
             </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+              <Field label="참여자 이름 (쉼표로 구분)">
+                <input
+                  value={editParticipants}
+                  onChange={(e) => setEditParticipants(e.target.value)}
+                  placeholder="참여자 1, 참여자 2"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="프로젝트 URL">
+                <input
+                  type="url"
+                  value={editMediaUrl}
+                  onChange={(e) => setEditMediaUrl(e.target.value)}
+                  placeholder="https://"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="썸네일 이미지 (10MB 이하, PNG/JPEG/WEBP/GIF)">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    if (!file) return;
+                    if (!["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type.toLowerCase())) {
+                      setEditError("PNG, JPEG, WEBP, GIF 이미지만 업로드할 수 있어요.");
+                      e.target.value = "";
+                      return;
+                    }
+                    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
+                      setEditError("썸네일은 10MB 이하의 파일만 업로드할 수 있어요.");
+                      e.target.value = "";
+                      return;
+                    }
+                    setEditThumbnailFile(file);
+                    setEditThumbnailPreview(URL.createObjectURL(file));
+                    setEditError(null);
+                  }}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
+            {editThumbnailPreview && (
+              <img
+                src={editThumbnailPreview}
+                alt="썸네일 미리보기"
+                className="mt-3 h-32 w-48 rounded-lg object-cover"
+              />
+            )}
 
             {editError && <p className="mt-3 text-sm text-red-500">{editError}</p>}
 
@@ -511,8 +688,53 @@ export default function AdminPage() {
 
       {/* HOME 큐레이션 설정 */}
       <section id="curation-settings" className="mb-10 scroll-mt-20 md:mb-16">
-        <h2 className="mb-3 text-lg font-bold md:mb-4 md:text-2xl">HOME 큐레이션 설정</h2>
+        <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
+          <h2 className="text-lg font-bold md:text-2xl">HOME 큐레이션 설정</h2>
+          <button
+            type="button"
+            onClick={() => setShowCurationList((open) => !open)}
+            className="shrink-0 rounded-md border border-palette-border bg-white px-3 py-2 text-xs font-semibold hover:border-palette-accent md:text-sm"
+          >
+            {showCurationList ? "목록 닫기" : "프로젝트 목록"}
+          </button>
+        </div>
         {curationError && <p className="mb-3 text-sm text-red-500">{curationError}</p>}
+        {showCurationList && (
+          <div className="mb-4 rounded-xl bg-white p-4 shadow-strong md:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold md:text-base">프로젝트 선택</h3>
+              <span className="text-xs text-palette-muted">{curationProjects.length} / 3</span>
+            </div>
+            {availableProjects.length === 0 ? (
+              <p className="text-sm text-palette-muted">선택할 프로젝트가 없어요.</p>
+            ) : (
+              <ul className="max-h-80 divide-y divide-palette-border overflow-y-auto">
+                {availableProjects.map((project) => {
+                  const projectId = Number(project.id);
+                  const hasNumericId = Number.isSafeInteger(projectId) && projectId > 0;
+                  const selected = hasNumericId && curationProjects.some((item) => item.id === projectId);
+                  return (
+                    <li key={project.id}>
+                      <label className="flex min-h-11 items-center gap-3 py-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          disabled={!hasNumericId || (!selected && curationProjects.length >= 3)}
+                          onChange={() => toggleCurationProject(project)}
+                          className="size-4 accent-palette-accent"
+                        />
+                        <span className="min-w-0 flex-1 truncate">{project.title}</span>
+                        {!hasNumericId && (
+                          <span className="text-xs text-palette-muted">ID 확인 필요</span>
+                        )}
+                      </label>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
         {sections === null ? (
           <p className="text-sm text-palette-muted">불러오는 중...</p>
         ) : curationProjects.length === 0 ? (
@@ -554,12 +776,66 @@ export default function AdminPage() {
       {/* 스토리 업로드 */}
       <section id="story-upload" className="scroll-mt-20">
         <h2 className="mb-3 text-lg font-bold md:mb-4 md:text-2xl">스토리 업로드</h2>
+        <div className="mb-4 rounded-xl bg-white p-4 shadow-strong md:p-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            <Field label="스토리 제목">
+              <input value={storyTitle} onChange={(e) => setStoryTitle(e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="이름">
+              <input value={storyUsername} onChange={(e) => setStoryUsername(e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="썸네일 (10MB 이하, PNG/JPEG/WEBP/GIF)">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (!file) return;
+                  const validationError = validateThumbnailFile(file);
+                  if (validationError) {
+                    setStoryError(validationError);
+                    e.target.value = "";
+                    return;
+                  }
+                  setStoryThumbnailFile(file);
+                  setStoryThumbnailPreview(URL.createObjectURL(file));
+                  setStoryError(null);
+                }}
+                className={inputClass}
+              />
+            </Field>
+          </div>
+          {storyThumbnailPreview && (
+            <img src={storyThumbnailPreview} alt="스토리 썸네일 미리보기" className="mt-3 h-32 w-48 rounded-lg object-cover" />
+          )}
+          {storyError && <p className="mt-3 text-sm text-red-500">{storyError}</p>}
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={submitStory}
+              disabled={savingStory}
+              className="rounded-xl bg-[#20b958] px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {savingStory ? "저장 중..." : editingStoryId ? "수정 완료" : "스토리 업로드"}
+            </button>
+            {editingStoryId && (
+              <button type="button" onClick={resetStoryForm} className="rounded-xl bg-palette-muted px-5 py-2.5 text-sm font-semibold text-white">
+                취소
+              </button>
+            )}
+          </div>
+        </div>
         {stories.length === 0 ? <p className="text-sm text-palette-muted">업로드된 스토리가 없어요.</p> : (
           <ul className="grid gap-2 md:grid-cols-2">
             {stories.map((story) => (
-              <li key={story.id} className="rounded-xl bg-palette-section p-4">
-                <p className="font-semibold">{story.title || "제목 없음"}</p>
-                <p className="mt-1 text-xs text-palette-muted">{story.username ?? "-"} · {formatDate(story.createdAt)}</p>
+              <li key={story.id} className="flex items-center gap-3 rounded-xl bg-palette-section p-4">
+                {story.thumbnailUrl && <img src={story.thumbnailUrl} alt="" className="size-16 rounded-lg object-cover" />}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{story.title || "제목 없음"}</p>
+                  <p className="mt-1 text-xs text-palette-muted">{story.username ?? "-"} · {formatDate(story.createdAt)}</p>
+                </div>
+                <button type="button" onClick={() => editStory(story)} className="rounded-lg border px-3 py-1.5 text-xs">수정</button>
+                <button type="button" onClick={() => removeStory(story)} className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-600">삭제</button>
               </li>
             ))}
           </ul>
@@ -599,4 +875,3 @@ function formatDate(value?: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }
-

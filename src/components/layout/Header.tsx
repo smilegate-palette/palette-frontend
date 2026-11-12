@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // Figma(node 8:63 데스크탑 / 52:324 모바일 메뉴) 실제 시안 기준: 상단 GNB 배경 #fffced(크림),
@@ -13,18 +13,36 @@ const NAV_ITEMS = [
 ];
 
 export default function Header() {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const { pathname } = location;
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
   const { isLoggedIn, email, role, logout } = useAuth();
   const isAdmin = role === "ADMIN";
+
+  useEffect(() => {
+    const state = location.state as { authNotice?: unknown } | null;
+    if (typeof state?.authNotice !== "string") return;
+    setAuthNotice(state.authNotice);
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: null,
+    });
+  }, [location.hash, location.key, location.pathname, location.search, location.state, navigate]);
+
+  useEffect(() => {
+    if (!authNotice) return;
+    const timeout = window.setTimeout(() => setAuthNotice(null), 3000);
+    return () => window.clearTimeout(timeout);
+  }, [authNotice]);
 
   const handleAuthClick = () => {
     setMenuOpen(false);
     if (isLoggedIn) {
       logout();
-      navigate("/");
+      navigate("/", { state: { authNotice: "로그아웃되었습니다." } });
     } else {
       navigate("/login");
     }
@@ -103,6 +121,16 @@ export default function Header() {
           </button>
         </div>
       </div>
+
+      {authNotice && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed right-4 top-20 z-[60] rounded-lg bg-black px-4 py-3 text-sm font-medium text-white shadow-strong"
+        >
+          {authNotice}
+        </div>
+      )}
 
       {/* 모바일 전체화면 메뉴 (Figma node 52:324 기준: 상단 로그인 유도문구/닫기 + 세로 nav 목록) */}
       {menuOpen && (

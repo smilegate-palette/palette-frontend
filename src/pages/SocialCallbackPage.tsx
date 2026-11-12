@@ -38,7 +38,7 @@ export default function SocialCallbackPage() {
     socialLogin(provider, code, state ?? undefined)
       .then((res) => {
         applySession(res.accesstoken, res.email, res.userId, res.role);
-        navigate("/");
+        navigate("/", { state: { authNotice: "로그인되었습니다." } });
       })
       .catch(() => setError("소셜 로그인에 실패했어요. 잠시 후 다시 시도해주세요."));
     // eslint-disable-next-line react-hooks/exhaustive-deps

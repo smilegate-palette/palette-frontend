@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { mapProjectResponse } from "./projects";
+import { mapProjectResponse, uploadProjectThumbnail } from "./projects";
 import { Project } from "@/lib/types/project";
 import { Comment } from "@/lib/types/comment";
 
@@ -39,6 +39,7 @@ export interface AdminStory {
   id: string;
   title: string;
   username?: string;
+  thumbnailUrl?: string;
   createdAt?: string;
 }
 
@@ -88,12 +89,7 @@ export async function getAdminDashboard(userId: string): Promise<AdminDashboard>
   const stories = extractArray(
     object.stories ?? object.storyUploads ?? object.story_uploads,
     ["items", "content"]
-  ).map((story) => ({
-    id: String(story.id ?? story.story_id ?? ""),
-    title: String(story.story_title ?? story.title ?? ""),
-    username: (story.story_username ?? story.username) as string | undefined,
-    createdAt: (story.created_at ?? story.createdAt) as string | undefined,
-  }));
+  ).map(mapAdminStory);
   const curation = extractSections(
     object.curationSections ??
       object.curation ??
@@ -116,6 +112,16 @@ export async function getAdminDashboard(userId: string): Promise<AdminDashboard>
       totalProjects: Number(statsObject.totalProjects ?? list.length),
       totalStories: Number(statsObject.totalStories ?? stories.length),
     },
+  };
+}
+
+function mapAdminStory(story: Record<string, unknown>): AdminStory {
+  return {
+    id: String(story.id ?? story.story_id ?? ""),
+    title: String(story.story_title ?? story.title ?? ""),
+    username: (story.story_username ?? story.username) as string | undefined,
+    thumbnailUrl: (story.thumbnail_url ?? story.thumbnailUrl) as string | undefined,
+    createdAt: (story.created_at ?? story.createdAt) as string | undefined,
   };
 }
 
@@ -178,20 +184,33 @@ export async function deleteAdminComment(
   );
 }
 
-// 관리자 프로젝트 직접 수정. Figma 관리자 시안(node 92:2)엔 프로젝트명/유형/설명/썸네일/추가 필드까지
-// 있는데, 썸네일 업로드·추가 필드는 이걸 저장할 백엔드 필드/엔드포인트가 없어서 화면만 만들고
-// 실제로 저장은 안 되게 해뒀습니다 (AdminPage 참고). 여기선 실제로 보낼 수 있는 필드만 받습니다.
+// 관리자 프로젝트 직접 수정.
 export async function updateAdminProject(
   userId: string,
   projectId: string,
-  payload: { title: string; category: string; description: string }
+  payload: {
+    title: string;
+    category: string;
+    description: string;
+    organization: string;
+    participants: string[];
+    mediaUrl: string;
+    thumbnailFile?: File | null;
+  }
 ): Promise<void> {
+  const thumbnailUrl = payload.thumbnailFile
+    ? await uploadProjectThumbnail(payload.thumbnailFile)
+    : undefined;
   await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/${projectId}`, {
     method: "PATCH",
     body: JSON.stringify({
       project_title: payload.title,
       category: payload.category,
       description: payload.description,
+      organization: payload.organization,
+      participants: payload.participants,
+      media_url: payload.mediaUrl,
+      thumbnail_url: thumbnailUrl,
     }),
   });
 }
@@ -252,17 +271,53 @@ export async function saveCurationOrder(
   });
 }
 
-// 스토리 등록. 프로젝트 등록처럼 이미지를 data URL로 보내면 백엔드가 thumbnail_url을 만들어 저장함(백엔드 답변 2026.10).
+export async function getStories(): Promise<AdminStory[]> {
+  const raw = await apiFetch<unknown>("/api/admin/story");
+  return extractArray(raw, []).map(mapAdminStory);
+}
+
+export async function getOffTheRecordStories(): Promise<AdminStory[]> {
+  const raw = await apiFetch<unknown>("/api/story");
+  return extractArray(raw, []).map(mapAdminStory);
+}
+
 export async function createStory(
   userId: string,
-  payload: { title: string; username: string; thumbnailDataUrl?: string }
-): Promise<void> {
-  await apiFetch<void>(`/api/admin/story/${encodeURIComponent(userId)}`, {
+  payload: { title: string; username: string; thumbnailUrl?: string }
+): Promise<AdminStory> {
+  const raw = await apiFetch<Record<string, unknown>>(`/api/admin/story/${encodeURIComponent(userId)}`, {
     method: "POST",
     body: JSON.stringify({
       story_title: payload.title,
       story_username: payload.username,
-      thumbnail_url: payload.thumbnailDataUrl,
+      thumbnail_url: payload.thumbnailUrl,
     }),
   });
+  return mapAdminStory(raw);
+}
+
+export async function updateStory(
+  userId: string,
+  storyId: string,
+  payload: { title: string; username: string; thumbnailUrl?: string }
+): Promise<AdminStory> {
+  const raw = await apiFetch<Record<string, unknown>>(
+    `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        story_title: payload.title,
+        story_username: payload.username,
+        thumbnail_url: payload.thumbnailUrl,
+      }),
+    }
+  );
+  return mapAdminStory(raw);
+}
+
+export async function deleteStory(userId: string, storyId: string): Promise<void> {
+  await apiFetch<void>(
+    `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
+    { method: "DELETE" }
+  );
 }

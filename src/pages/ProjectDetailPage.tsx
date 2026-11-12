@@ -16,24 +16,42 @@ export default function ProjectDetailPage() {
   const { userId, role } = useAuth();
   const [project, setProject] = useState<Project | undefined | null>(null); // null = 로딩중
   const [comments, setComments] = useState<Comment[]>([]);
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   // PROJECT 목록처럼 비로그인 상태에서 401/403이 날 수 있어서 별도로 구분해서 안내
   const [authError, setAuthError] = useState(false);
 
   const isOwner = Boolean(project?.ownerId && project.ownerId === userId);
   const isAdmin = role === "ADMIN";
 
-  const handleEdit = async () => {
+  const startEditingDescription = () => {
     if (!project) return;
-    const title = window.prompt("프로젝트명을 수정해주세요.", project.title)?.trim();
-    if (!title) return;
-    const description = window.prompt("프로젝트 설명을 수정해주세요.", project.description ?? "")?.trim();
-    if (!description) return;
+    setDescriptionDraft(project.description ?? "");
+    setEditError(null);
+    setEditingDescription(true);
+  };
+
+  const saveDescription = async () => {
+    if (!project) return;
+    if (!descriptionDraft.trim()) {
+      setEditError("프로젝트 설명을 입력해주세요.");
+      return;
+    }
+    setSavingEdit(true);
     try {
-      await updateProject(project.id, { title, description });
-      setProject({ ...project, title, description });
+      await updateProject(project.id, {
+        title: project.title,
+        description: descriptionDraft,
+      });
+      setProject({ ...project, description: descriptionDraft });
+      setEditingDescription(false);
+      setEditError(null);
     } catch (err) {
-      setAuthError(false);
-      window.alert(err instanceof Error ? err.message : "프로젝트 수정에 실패했어요.");
+      setEditError(err instanceof Error ? err.message : "프로젝트 수정에 실패했어요.");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -101,14 +119,6 @@ export default function ProjectDetailPage() {
       <div className="mb-2 flex items-center justify-between gap-3">
         <h1 className="text-lg font-bold md:text-3xl">{project.title}</h1>
         <div className="flex items-center gap-2">
-          {isOwner && (
-            <button
-              onClick={handleEdit}
-              className="rounded-lg border border-palette-border px-2.5 py-1.5 text-xs text-palette-muted"
-            >
-              수정
-            </button>
-          )}
           {(isOwner || isAdmin) && (
             <button
               onClick={handleDelete}
@@ -142,25 +152,116 @@ export default function ProjectDetailPage() {
         </div>
       )}
 
-      {/* TODO: 미디어 영역 - 컴포넌트 명세 기준 YouTube/Vimeo 임베드, 파일 업로드 영상,
-          웹 링크(iframe), 이미지 갤러리(슬라이더)를 업로드 유형에 따라 다르게 렌더링해야 함.
-          지금은 이미지 1장만 처리. 업로드 폼 만들 때 같이 확장 필요. */}
       <div className="relative mx-auto aspect-video w-full max-w-5xl overflow-hidden rounded-lg bg-palette-placeholder md:rounded-2xl">
-        <img
-          src={project.thumbnailUrl || project.mediaUrl}
-          alt={project.title}
-          className="h-full w-full object-cover"
-        />
+        {project.thumbnailUrl ? (
+          <img
+            src={project.thumbnailUrl}
+            alt={project.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-white">
+            {project.title}
+          </div>
+        )}
       </div>
 
+      {project.mediaUrl && (
+        <ProjectMediaLink mediaUrl={project.mediaUrl} projectTitle={project.title} />
+      )}
+
       <section className="mt-6 md:mt-10">
-        <h2 className="mb-2 text-base font-bold md:mb-3 md:text-2xl">프로젝트 설명</h2>
-        <ExpandableDescription text={project.description ?? ""} />
+        <div className="mb-2 flex items-center justify-between gap-3 md:mb-3">
+          <h2 className="text-base font-bold md:text-2xl">프로젝트 설명</h2>
+          {isOwner && !editingDescription && (
+            <button
+              type="button"
+              onClick={startEditingDescription}
+              className="rounded-lg border border-palette-border px-2.5 py-1.5 text-xs text-palette-muted"
+            >
+              설명 수정
+            </button>
+          )}
+        </div>
+        {editingDescription ? (
+          <div>
+            <textarea
+              autoFocus
+              value={descriptionDraft}
+              onChange={(event) => setDescriptionDraft(event.target.value)}
+              rows={7}
+              className="w-full resize-y rounded-lg bg-palette-section px-3 py-2.5 text-sm text-palette-text outline-none focus:ring-2 focus:ring-palette-accent md:px-4 md:py-3 md:text-lg"
+            />
+            {editError && <p className="mt-2 text-sm text-red-500">{editError}</p>}
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={saveDescription}
+                disabled={savingEdit}
+                className="rounded-lg bg-palette-accent px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {savingEdit ? "저장 중..." : "저장"}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingDescription(false);
+                  setEditError(null);
+                }}
+                disabled={savingEdit}
+                className="rounded-lg border border-palette-border px-4 py-2 text-sm font-semibold text-palette-muted disabled:opacity-50"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        ) : (
+          <ExpandableDescription text={project.description ?? ""} />
+        )}
       </section>
 
       <CommentSection projectId={project.id} initialComments={comments} />
     </div>
   );
+}
+
+function ProjectMediaLink({ mediaUrl, projectTitle }: { mediaUrl: string; projectTitle: string }) {
+  const isDataUrl = /^data:[^,]*,/i.test(mediaUrl);
+  const safeWebUrl = isDataUrl ? undefined : getSafeWebUrl(mediaUrl);
+  if (!isDataUrl && !safeWebUrl) return null;
+
+  const downloadName = `${projectTitle.replace(/[\\/:*?"<>|]/g, "_")}-첨부파일`;
+  return (
+    <div className="mx-auto mt-4 w-full max-w-5xl">
+      {isDataUrl ? (
+        <a
+          href={mediaUrl}
+          download={downloadName}
+          className="inline-flex rounded-lg bg-palette-accent px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          첨부파일 다운로드
+        </a>
+      ) : (
+        <a
+          href={safeWebUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex rounded-lg bg-palette-accent px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          프로젝트 링크 열기
+        </a>
+      )}
+    </div>
+  );
+}
+
+function getSafeWebUrl(value: string): string | undefined {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 // 필터 칩과 동일한 스타일(#ececec pill) - Figma 상세 페이지에서도 목록 필터와 같은 톤 사용

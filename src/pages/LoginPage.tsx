@@ -34,10 +34,10 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password });
       applySession(result.accesstoken, result.email, result.userId, result.role);
-      navigate("/");
+      navigate("/", { state: { authNotice: "로그인되었습니다." } });
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setError("아이디 또는 비밀번호가 맞지 않습니다");
+      if (err instanceof ApiError && [400, 401, 403].includes(err.status)) {
+        setError("아이디 또는 비밀번호가 일치하지 않습니다.");
       } else {
         setError("로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
       }
