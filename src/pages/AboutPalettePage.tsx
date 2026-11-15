@@ -158,13 +158,11 @@ const PROGRAMS: Program[] = [
       "청소년 대상의 원데이 창의 워크숍. 대화형/생성형 AI를 활용해 나만의 콘텐츠를 완성합니다.",
   },
   {
-    // 시안에 설명이 "아하! 팔레트"와 동일하게 복붙돼 있어서(디자이너 확인 필요) 일단 시안 그대로 넣었어요.
     name: "팔레트 플레이어",
     image: "/images/about/program-player.png",
     period: "6주",
-    subtitle: "어린이 AI & Hands-On 창의 프로그램",
-    description:
-      "모바일 창의학습 App. '아하오호'의 AI 가이드에 따라 아동의 흥미를 탐색하고 창의 활동을 경험합니다.",
+    subtitle: "AI 게임 창작 프로젝트",
+    description: "다양한 주제와 관심사를 기반으로 생성형 AI를 활용해 하나의 게임으로 구현합니다.",
   },
   {
     name: "팔레트 창의워크숍",
@@ -173,6 +171,13 @@ const PROGRAMS: Program[] = [
     subtitle: "청소년 AI 기반 자율 창작 프로그램",
     description:
       "청년 멘토 Hope Creator와 기관 또래들이 한 팀이 되어 관심사가 반영된 창작 프로젝트를 만들고 공유합니다.",
+  },
+  {
+    name: "팔레트 유스파티",
+    image: "/images/about/program-youthparty.png",
+    period: "4개월",
+    subtitle: "청소년 자율 창작 동아리",
+    description: "지역아동센터 아동청소년들이 자발적으로 팀을 이루어 창작 프로젝트를 설계하고 실행합니다.",
   },
   {
     name: "드림 부스터 캠프",
@@ -329,24 +334,39 @@ export default function AboutPalettePage() {
       <section className="mx-auto mb-10 max-w-[1290px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
-        <h1 className="mb-3 text-xl font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl">
+        <h1 className="mb-2 whitespace-nowrap text-[min(4.6vw,18px)] font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
-        <div className="text-center text-sm font-medium leading-relaxed text-palette-text md:text-lg xl:text-lg">
+
+        {/* 모바일(138:286): 왼쪽 정렬, 14px, 시안에서 정해둔 6줄로 끊김 (화면이 좁으면 글자 크기를 같이 줄여서 줄이 안 꺾이게 함) */}
+        <div className="whitespace-pre text-left text-[min(3.59vw,14px)] font-medium leading-[1.43] text-palette-text md:hidden">
+          <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해</p>
+          <p>미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
+          <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을</p>
+          <p>조성하여 아이들이 자신만의 색깔을 발견하고 관심사에서 출발한</p>
+          <p>프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을</p>
+          <p>기를 수 있도록 지원하고 있습니다.</p>
+        </div>
+
+        {/* 데스크탑(109:2): 왼쪽 정렬, 3줄. 1280px 이상에서는 줄바꿈 없이 그대로, 그보다 좁으면 자연스럽게 줄바꿈 */}
+        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6] 3xl:text-[1.21vw]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
         </div>
 
-        {/* 실제 팔레트 자체 제작 일러스트 필요 - public/images/about-hero.png 만 넣어주시면 바로 나와요. */}
-        <div className="mx-auto mt-8 flex aspect-square w-full max-w-md items-center justify-center rounded-full bg-palette-section text-sm text-palette-muted md:mt-10">
+        {/* 소개 일러스트: 시안에서는 원이 아니라 모서리가 둥근 사각형이고, 콘텐츠 폭에 꽉 차게 들어가요.
+            (이전에 정사각형+원형으로 잘라서 모바일에서 그림이 잘려 보였어요) 비율은 원본 그대로 유지 */}
+        <div className="mt-4 md:mt-8">
           {heroImageFailed ? (
-            <span>일러스트 이미지 준비중</span>
+            <div className="flex aspect-[351/376] w-full items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted">
+              일러스트 이미지 준비중
+            </div>
           ) : (
             <img
               src="/images/about-hero.png"
               alt="팔레트가 만드는 창의환경 일러스트"
-              className="h-full w-full rounded-full object-cover"
+              className="h-auto w-full rounded-2xl md:rounded-[20px]"
               onError={() => setHeroImageFailed(true)}
             />
           )}
