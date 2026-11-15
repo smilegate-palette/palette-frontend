@@ -138,6 +138,7 @@ interface Program {
   period: string;
   subtitle: string;
   description: string;
+  hasProjects: boolean; // 시안: 아하!/드림 온 페스타는 'Story 보기'만, 나머지는 '창작 프로젝트 보기'도 있음
 }
 
 const PROGRAMS: Program[] = [
@@ -148,6 +149,7 @@ const PROGRAMS: Program[] = [
     subtitle: "어린이 AI & Hands-On 창의 프로그램",
     description:
       "모바일 창의학습 App. '아하오호'의 AI 가이드에 따라 아동의 흥미를 탐색하고 창의 활동을 경험합니다.",
+    hasProjects: false,
   },
   {
     name: "드림 온 페스타",
@@ -156,6 +158,7 @@ const PROGRAMS: Program[] = [
     subtitle: "원데이 청소년 창의 ·창작 페스티벌",
     description:
       "청소년 대상의 원데이 창의 워크숍. 대화형/생성형 AI를 활용해 나만의 콘텐츠를 완성합니다.",
+    hasProjects: false,
   },
   {
     name: "팔레트 플레이어",
@@ -163,6 +166,7 @@ const PROGRAMS: Program[] = [
     period: "6주",
     subtitle: "AI 게임 창작 프로젝트",
     description: "다양한 주제와 관심사를 기반으로 생성형 AI를 활용해 하나의 게임으로 구현합니다.",
+    hasProjects: true,
   },
   {
     name: "팔레트 창의워크숍",
@@ -171,6 +175,7 @@ const PROGRAMS: Program[] = [
     subtitle: "청소년 AI 기반 자율 창작 프로그램",
     description:
       "청년 멘토 Hope Creator와 기관 또래들이 한 팀이 되어 관심사가 반영된 창작 프로젝트를 만들고 공유합니다.",
+    hasProjects: true,
   },
   {
     name: "팔레트 유스파티",
@@ -178,6 +183,7 @@ const PROGRAMS: Program[] = [
     period: "4개월",
     subtitle: "청소년 자율 창작 동아리",
     description: "지역아동센터 아동청소년들이 자발적으로 팀을 이루어 창작 프로젝트를 설계하고 실행합니다.",
+    hasProjects: true,
   },
   {
     name: "드림 부스터 캠프",
@@ -186,6 +192,7 @@ const PROGRAMS: Program[] = [
     subtitle: "청소년 디지털 ·AI 창작 캠프",
     description:
       "멘토와 청소년들이 함께 관심사 기반의 창작 프로젝트를 단기간에 완성하는 몰입형 창작 캠프입니다.",
+    hasProjects: true,
   },
 ];
 
@@ -441,41 +448,41 @@ export default function AboutPalettePage() {
       {/* 팔레트 프로그램 */}
       <section className="mx-auto mt-10 max-w-[1290px] md:mt-20">
         <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
-        {/* 모바일 시안도 3열(작게)이라 모바일에서도 3열 유지 */}
+        {/* 시안: 카드 배경 #f7f7f7, 기간은 노란 테두리 흰 알약, 버튼은 노란 테두리 알약. 모바일도 3열(작게) */}
         <ul className="grid grid-cols-3 gap-1.5 md:gap-6">
           {PROGRAMS.map((program) => (
             <li
               key={program.name}
-              className="relative overflow-hidden rounded-lg bg-white md:rounded-2xl"
+              className="relative overflow-hidden rounded-lg bg-[#f7f7f7] md:rounded-2xl"
               style={{ boxShadow: "0px 4px 10px 0px rgba(0,0,0,0.25)" }}
             >
-              <img src={program.image} alt={program.name} className="aspect-[16/9] w-full object-cover" />
-              <span className="absolute left-1 top-1 rounded-full bg-white px-1.5 py-0.5 text-[7px] font-semibold md:left-3 md:top-3 md:px-3 md:py-1 md:text-sm">
+              <img src={program.image} alt={program.name} className="aspect-[16/10] w-full object-cover" />
+              <span className="absolute left-1 top-1 rounded-full border border-[#ffd400] bg-white px-1.5 py-0.5 text-[7px] font-semibold md:left-3 md:top-3 md:border-2 md:px-3 md:py-1 md:text-sm">
                 {program.period}
               </span>
               <div className="p-1.5 md:p-5">
                 <p className="text-[10px] font-bold leading-tight md:text-xl">{program.name}</p>
-                <p className="mt-0.5 text-[7px] font-semibold leading-tight text-palette-muted md:text-sm">
-                  {program.subtitle}
-                </p>
-                <p className="mt-1 text-[7px] leading-snug text-palette-muted md:mt-2 md:text-sm md:leading-relaxed">
+                <p className="mt-0.5 text-[7px] font-semibold leading-tight md:text-base">{program.subtitle}</p>
+                <p className="mt-1 text-[6px] leading-snug text-palette-muted md:mt-2 md:text-sm md:leading-relaxed">
                   {program.description}
                 </p>
-                {/* 두 버튼 모두 이동할 대상(프로그램별 프로젝트/스토리 필터)이 아직 정해지지 않아서 연결 전이에요 */}
+                {/* 이동할 대상(프로그램별 프로젝트/스토리 필터)이 아직 정해지지 않아 연결 전이에요 */}
                 <div className="mt-1.5 flex flex-wrap gap-1 md:mt-4 md:gap-2">
+                  {program.hasProjects && (
+                    <button
+                      type="button"
+                      disabled
+                      className="rounded-full border border-[#ffd400] bg-white px-1.5 py-0.5 text-[6px] font-semibold text-[#c9a400] md:px-3 md:py-1 md:text-xs"
+                    >
+                      창작 프로젝트 보기
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled
-                    className="rounded-full bg-[#ececec] px-1.5 py-0.5 text-[7px] font-semibold opacity-70 md:px-3 md:py-1.5 md:text-xs"
+                    className="rounded-full border border-[#ffd400] bg-white px-1.5 py-0.5 text-[6px] font-semibold text-[#c9a400] md:px-3 md:py-1 md:text-xs"
                   >
                     Story 보기
-                  </button>
-                  <button
-                    type="button"
-                    disabled
-                    className="rounded-full bg-[#ffd400] px-1.5 py-0.5 text-[7px] font-semibold opacity-70 md:px-3 md:py-1.5 md:text-xs"
-                  >
-                    창작 프로젝트 보기
                   </button>
                 </div>
               </div>
