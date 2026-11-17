@@ -365,7 +365,7 @@ export default function AboutPalettePage() {
         </div>
 
         {/* 데스크탑(109:2): 왼쪽 정렬, 3줄. 1280px 이상에서는 줄바꿈 없이 그대로, 그보다 좁으면 자연스럽게 줄바꿈 */}
-        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:whitespace-nowrap xl:text-[min(1.94vw,28px)] xl:leading-[1.6] 3xl:text-[31px]">
+        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:text-[min(1.94vw,28px)] xl:leading-[1.6] 3xl:text-[31px]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
