@@ -55,6 +55,7 @@ export default function AdminPage() {
   const [storyTitle, setStoryTitle] = useState("");
   const [storyUsername, setStoryUsername] = useState("");
   const [storyLink, setStoryLink] = useState("");
+  const [storyDate, setStoryDate] = useState("");
   const [storyThumbnailFile, setStoryThumbnailFile] = useState<File | null>(null);
   const [storyThumbnailPreview, setStoryThumbnailPreview] = useState("");
   const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
@@ -304,6 +305,7 @@ export default function AdminPage() {
     setStoryTitle("");
     setStoryUsername("");
     setStoryLink("");
+    setStoryDate("");
     setStoryThumbnailFile(null);
     setStoryThumbnailPreview("");
     setStoryError(null);
@@ -314,6 +316,7 @@ export default function AdminPage() {
     setStoryTitle(story.title);
     setStoryUsername(story.username ?? "");
     setStoryLink(story.link ?? "");
+    setStoryDate(story.createdAt ? story.createdAt.slice(0, 10) : "");
     setStoryThumbnailFile(null);
     setStoryThumbnailPreview(story.thumbnailUrl ?? "");
     setStoryError(null);
@@ -335,6 +338,7 @@ export default function AdminPage() {
         username: storyUsername.trim() || undefined, // 등록자(기업) 이름은 화면에 노출하지 않아 입력칸을 뺐어요(기획 시트 #16)
         thumbnailUrl,
         link: storyLink.trim() || undefined,
+        date: storyDate || undefined,
       };
       if (editingStoryId) {
         await updateStory(userId, editingStoryId, payload);
@@ -787,6 +791,9 @@ export default function AdminPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="스토리 제목">
               <input value={storyTitle} onChange={(e) => setStoryTitle(e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="등록일자 (비우면 올린 날짜로 들어가요)">
+              <input type="date" value={storyDate} onChange={(e) => setStoryDate(e.target.value)} className={inputClass} />
             </Field>
             <Field label="링크 (선택, 썸네일/제목 클릭 시 새 창으로 열려요)">
               <input

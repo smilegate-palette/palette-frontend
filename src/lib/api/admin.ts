@@ -122,7 +122,7 @@ function mapAdminStory(story: Record<string, unknown>): AdminStory {
     title: String(story.story_title ?? story.title ?? ""),
     username: (story.story_username ?? story.username) as string | undefined,
     thumbnailUrl: (story.thumbnail_url ?? story.thumbnailUrl) as string | undefined,
-    createdAt: (story.created_at ?? story.createdAt ?? story.upload_date ?? story.uploadDate) as string | undefined,
+    createdAt: (story.story_date ?? story.storyDate ?? story.created_at ?? story.createdAt ?? story.upload_date ?? story.uploadDate) as string | undefined,
     // 링크 필드명은 백엔드가 아직 확정 전이라 흔한 이름들을 모두 받아요
     link: (story.story_link ?? story.link ?? story.story_url ?? story.url ?? story.storyLink) as string | undefined,
   };
@@ -286,7 +286,7 @@ export async function getOffTheRecordStories(): Promise<AdminStory[]> {
 
 export async function createStory(
   userId: string,
-  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string }
+  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string; date?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(`/api/admin/story/${encodeURIComponent(userId)}`, {
     method: "POST",
@@ -295,6 +295,7 @@ export async function createStory(
       ...(payload.username ? { story_username: payload.username } : {}),
       thumbnail_url: payload.thumbnailUrl,
       ...(payload.link ? { story_link: payload.link } : {}),
+      ...(payload.date ? { story_date: payload.date } : {}), // 등록일자(YYYY-MM-DD). 필드명은 백엔드 확정 전이라 임시
     }),
   });
   return mapAdminStory(raw);
@@ -303,7 +304,7 @@ export async function createStory(
 export async function updateStory(
   userId: string,
   storyId: string,
-  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string }
+  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string; date?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(
     `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
@@ -314,6 +315,7 @@ export async function updateStory(
         ...(payload.username ? { story_username: payload.username } : {}),
         thumbnail_url: payload.thumbnailUrl,
         ...(payload.link ? { story_link: payload.link } : {}),
+        ...(payload.date ? { story_date: payload.date } : {}),
       }),
     }
   );
