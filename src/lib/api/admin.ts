@@ -286,13 +286,13 @@ export async function getOffTheRecordStories(): Promise<AdminStory[]> {
 
 export async function createStory(
   userId: string,
-  payload: { title: string; username: string; thumbnailUrl?: string; link?: string }
+  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(`/api/admin/story/${encodeURIComponent(userId)}`, {
     method: "POST",
     body: JSON.stringify({
       story_title: payload.title,
-      story_username: payload.username,
+      ...(payload.username ? { story_username: payload.username } : {}),
       thumbnail_url: payload.thumbnailUrl,
       ...(payload.link ? { story_link: payload.link } : {}),
     }),
@@ -303,7 +303,7 @@ export async function createStory(
 export async function updateStory(
   userId: string,
   storyId: string,
-  payload: { title: string; username: string; thumbnailUrl?: string; link?: string }
+  payload: { title: string; username?: string; thumbnailUrl?: string; link?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(
     `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
@@ -311,7 +311,7 @@ export async function updateStory(
       method: "PATCH",
       body: JSON.stringify({
         story_title: payload.title,
-        story_username: payload.username,
+        ...(payload.username ? { story_username: payload.username } : {}),
         thumbnail_url: payload.thumbnailUrl,
         ...(payload.link ? { story_link: payload.link } : {}),
       }),

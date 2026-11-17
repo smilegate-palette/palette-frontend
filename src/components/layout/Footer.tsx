@@ -44,7 +44,7 @@ export default function Footer() {
         {/* 카피라이트 + 크레딧 */}
         <div className="min-w-0 flex-1 md:whitespace-nowrap">
           <p className="text-[9px] font-medium leading-tight md:text-[min(2.08vw,30px)] 3xl:text-[1.95vw]">
-            © 2023 Smilegate Foundation. All Rights Reserved.
+            © 2026 Smilegate Foundation. All Rights Reserved.
           </p>
           <div className="mt-1 text-[8px] font-medium leading-[11px] md:mt-[min(1.7vw,24px)] md:text-[min(1.94vw,28px)] md:leading-[min(2.8vw,40px)] 3xl:text-[1.76vw] 3xl:leading-[2.8vw]">
             <p>PROJECT CREDITS</p>

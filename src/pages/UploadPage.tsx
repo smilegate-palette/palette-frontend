@@ -7,14 +7,14 @@ import {
   validateThumbnailFile,
 } from "@/lib/api/projects";
 import { USE_MOCK } from "@/lib/api/client";
-import { ProgramType, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
+import { PROGRAM_LABELS, PROGRAM_OPTIONS_ALL, ProgramType, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
 
 // Figma(node 60:2 데스크탑 / 63:343 모바일 "PROJECT 업로드 폼") 기준.
 // 5단계(기본 정보/참여자 정보/프로젝트 설명/미디어 업로드/완료)가 실제로는 한 페이지에
 // 세로로 쭉 이어진 스크롤 폼이라 그대로 한 페이지 컴포넌트로 구현했습니다.
 // 상단 스텝 인디케이터는 장식용(현재는 스크롤 위치에 따라 활성화되지 않는 정적 표시)입니다.
 
-const PROGRAM_OPTIONS: ProgramType[] = ["창의워크숍", "유스파티"];
+const PROGRAM_OPTIONS: ProgramType[] = PROGRAM_OPTIONS_ALL;
 const STEPS = ["기본 정보", "참여자 정보", "프로젝트 설명", "미디어 업로드", "완료"];
 type MediaType = "video" | "file" | "link";
 
@@ -191,10 +191,10 @@ export default function UploadPage() {
                 onChange={(e) => setProgram(e.target.value as ProgramType)}
                 className={inputClass}
               >
-                <option value="">창의워크숍 / 유스파티</option>
+                <option value="">프로그램 선택</option>
                 {PROGRAM_OPTIONS.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {PROGRAM_LABELS[p]}
                   </option>
                 ))}
               </select>

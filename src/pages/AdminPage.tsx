@@ -41,6 +41,9 @@ const STAT_CARDS: {
   { key: "stories", label: "스토리", icon: "📖", color: "#20b958" },
 ];
 
+// 기획 시트 #7: 캐러셀 큐레이션 3개 → 5개로 확대 (일단 5개로 지정)
+const MAX_CURATION = 5;
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const { isLoggedIn, userId, role } = useAuth();
@@ -100,7 +103,7 @@ export default function AdminPage() {
       setStories(dashboard.stories);
       setStats(dashboard.stats ?? null);
       setSections(dashboard.curation);
-      setCurationProjects(flattenCurationProjects(dashboard.curation).slice(0, 3));
+      setCurationProjects(flattenCurationProjects(dashboard.curation).slice(0, MAX_CURATION));
       setCurationError(null);
       setComments(null);
       if (storiesResult.status === "fulfilled") {
@@ -275,8 +278,8 @@ export default function AdminPage() {
       setCurationError(null);
       return;
     }
-    if (curationProjects.length >= 3) {
-      setCurationError("큐레이션 프로젝트는 최대 3개까지 선택할 수 있어요.");
+    if (curationProjects.length >= MAX_CURATION) {
+      setCurationError(`큐레이션 프로젝트는 최대 ${MAX_CURATION}개까지 선택할 수 있어요.`);
       return;
     }
     setCurationProjects((current) => [...current, { id: projectId, title: project.title }]);
@@ -317,8 +320,8 @@ export default function AdminPage() {
   };
 
   const submitStory = async () => {
-    if (!userId || !storyTitle.trim() || !storyUsername.trim()) {
-      setStoryError("스토리 제목과 이름을 입력해주세요.");
+    if (!userId || !storyTitle.trim()) {
+      setStoryError("스토리 제목을 입력해주세요.");
       return;
     }
     setSavingStory(true);
@@ -329,7 +332,7 @@ export default function AdminPage() {
         : storyThumbnailPreview || undefined;
       const payload = {
         title: storyTitle.trim(),
-        username: storyUsername.trim(),
+        username: storyUsername.trim() || undefined, // 등록자(기업) 이름은 화면에 노출하지 않아 입력칸을 뺐어요(기획 시트 #16)
         thumbnailUrl,
         link: storyLink.trim() || undefined,
       };
@@ -723,7 +726,7 @@ export default function AdminPage() {
                         <input
                           type="checkbox"
                           checked={selected}
-                          disabled={!hasNumericId || (!selected && curationProjects.length >= 3)}
+                          disabled={!hasNumericId || (!selected && curationProjects.length >= MAX_CURATION)}
                           onChange={() => toggleCurationProject(project)}
                           className="size-4 accent-palette-accent"
                         />
@@ -784,9 +787,6 @@ export default function AdminPage() {
           <div className="grid gap-3 md:grid-cols-2">
             <Field label="스토리 제목">
               <input value={storyTitle} onChange={(e) => setStoryTitle(e.target.value)} className={inputClass} />
-            </Field>
-            <Field label="이름">
-              <input value={storyUsername} onChange={(e) => setStoryUsername(e.target.value)} className={inputClass} />
             </Field>
             <Field label="링크 (선택, 썸네일/제목 클릭 시 새 창으로 열려요)">
               <input

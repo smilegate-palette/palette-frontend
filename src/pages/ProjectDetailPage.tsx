@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { deleteProject, getProjectDetail, updateProject } from "@/lib/api/projects";
 import { getComments } from "@/lib/api/comments";
 import { ApiError } from "@/lib/api/client";
-import { Project } from "@/lib/types/project";
+import { PROGRAM_LABELS, Project } from "@/lib/types/project";
 import { Comment } from "@/lib/types/comment";
 import CommentSection from "@/components/project/CommentSection";
 import NotFoundPage from "./NotFoundPage";
@@ -112,7 +112,7 @@ export default function ProjectDetailPage() {
     <div className="px-4 py-6 md:px-6 md:py-8">
       <div className="mb-3 flex flex-wrap gap-2">
         <MetaChip label={String(project.year)} />
-        <MetaChip label={project.program} />
+        <MetaChip label={PROGRAM_LABELS[project.program] ?? project.program} />
         {project.region && <MetaChip label={project.region} />}
       </div>
 

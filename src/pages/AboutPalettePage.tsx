@@ -144,6 +144,15 @@ interface Program {
 
 const PROGRAMS: Program[] = [
   {
+    name: "드림 온 페스타",
+    image: "/images/about/program-dream-on.png",
+    period: "1day",
+    subtitle: "원데이 청소년 창의 ·창작 페스티벌",
+    description:
+      "청소년 대상의 원데이 창의 워크숍. 대화형/생성형 AI를 활용해 나만의 콘텐츠를 완성합니다.",
+    hasProjects: false,
+  },
+  {
     name: "아하! 팔레트",
     image: "/images/about/program-aha.png",
     period: "4-8주",
@@ -153,19 +162,10 @@ const PROGRAMS: Program[] = [
     hasProjects: false,
   },
   {
-    name: "드림 온 페스타",
-    image: "/images/about/program-dream-on.png",
-    period: "4시간",
-    subtitle: "원데이 청소년 창의 ·창작 페스티벌",
-    description:
-      "청소년 대상의 원데이 창의 워크숍. 대화형/생성형 AI를 활용해 나만의 콘텐츠를 완성합니다.",
-    hasProjects: false,
-  },
-  {
-    name: "팔레트 플레이어",
+    name: "팔레트 어드벤처",
     image: "/images/about/program-player.png",
     period: "6주",
-    subtitle: "AI 게임 창작 프로젝트",
+    subtitle: "AI 창작 프로젝트",
     description: "다양한 주제와 관심사를 기반으로 생성형 AI를 활용해 하나의 게임으로 구현합니다.",
     hasProjects: true,
   },
@@ -345,7 +345,7 @@ export default function AboutPalettePage() {
     // 풀스크린(2560px) 시안은 데스크탑(1440px) 시안을 약 1.78배로 키운 것과 같은 구성이라,
     // 2000px 이상(풀스크린)에서는 화면 폭에 비례해서 페이지 전체를 확대(zoom)해요. 2560px에서 1.6배 = 풀스크린 시안 비율.
     // (예전엔 무조건 1.6배라서 2000~2300px 모니터에서는 내용이 화면보다 커졌어요)
-    <div className="px-4 py-6 md:px-6 md:py-10" style={zoom === 1 ? undefined : ({ zoom } as CSSProperties)}>
+    <div className="break-keep px-4 py-6 md:px-6 md:py-10" style={zoom === 1 ? undefined : ({ zoom } as CSSProperties)}>
       {/* 히어로 */}
       <section className="mx-auto mb-10 max-w-[1290px] 3xl:max-w-[1494px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.

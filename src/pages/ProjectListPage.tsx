@@ -6,6 +6,8 @@ import {
   Project,
   ProjectListParams,
   ProgramType,
+  PROGRAM_LABELS,
+  PROGRAM_OPTIONS_ALL,
   ProjectType,
   PROJECT_TYPES,
 } from "@/lib/types/project";
@@ -13,7 +15,7 @@ import ProjectGridCard from "@/components/common/ProjectGridCard";
 
 // 프로젝트 목록 필터: 연도 / 프로그램 / 형태 / 검색 + 정렬
 const YEAR_FILTERS = ["ALL", 2026, 2025, 2024, "~2023"] as const;
-const PROGRAM_FILTERS: ProgramType[] = ["유스파티", "창의워크숍"];
+const PROGRAM_FILTERS: ProgramType[] = PROGRAM_OPTIONS_ALL;
 
 export default function ProjectListPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -96,7 +98,7 @@ export default function ProjectListPage() {
         {PROGRAM_FILTERS.map((program) => (
           <FilterChip
             key={program}
-            label={program}
+            label={PROGRAM_LABELS[program]}
             active={programFilter === program}
             onClick={() => setProgramFilter(programFilter === program ? null : program)}
           />

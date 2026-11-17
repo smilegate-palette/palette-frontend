@@ -3,6 +3,18 @@ import { mockProjects } from "@/data/mockProjects";
 import { Project, ProjectListParams, ProjectListResponse } from "@/lib/types/project";
 import { getStoredUserId } from "@/lib/auth/token";
 
+// 서버에서 내려오는 프로그램 이름을 화면에서 쓰는 값으로 맞춰요 ("팔레트 창의워크숍" 같은 이름으로 와도 처리)
+function normalizeProgram(value: unknown): Project["program"] {
+  const name = String(value ?? "").replace(/\s/g, "");
+  if (name.includes("창의워크숍")) return "창의워크숍";
+  if (name.includes("유스파티")) return "유스파티";
+  if (name.includes("플레이어") || name.includes("어드벤처")) return "팔레트 플레이어";
+  if (name.includes("부스터")) return "드림 부스터 캠프";
+  if (name === "기타") return "기타";
+  return "창의워크숍";
+}
+
+
 // 2026.09.06 실제 배포된 Swagger(v0, /v3/api-docs) 재확인 기준 엔드포인트 (project-controller):
 //   GET    /api/project                          목록 조회
 //   GET    /api/project/{project_id}              상세 조회
@@ -45,7 +57,7 @@ export function mapProjectResponse(raw: Record<string, unknown>): Project {
       | string
       | undefined,
     title: (raw.project_title ?? raw.projectTitle ?? raw.title ?? "") as string,
-    program: (raw.program_name as Project["program"]) ?? "창의워크숍",
+    program: normalizeProgram(raw.program_name),
     types: raw.category ? [raw.category as Project["types"][number]] : [],
     year: (raw.year as number) ?? new Date().getFullYear(),
     region: raw.region as string | undefined,
