@@ -714,7 +714,7 @@ export default function AdminPage() {
           <div className="mb-4 rounded-xl bg-white p-4 shadow-strong md:p-5">
             <div className="mb-3 flex items-center justify-between gap-3">
               <h3 className="text-sm font-semibold md:text-base">프로젝트 선택</h3>
-              <span className="text-xs text-palette-muted">{curationProjects.length} / 3</span>
+              <span className="text-xs text-palette-muted">{curationProjects.length} / {MAX_CURATION}</span>
             </div>
             {availableProjects.length === 0 ? (
               <p className="text-sm text-palette-muted">선택할 프로젝트가 없어요.</p>
