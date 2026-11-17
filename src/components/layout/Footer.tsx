@@ -10,8 +10,8 @@ import { useState } from "react";
 // 1440px보다 넓은 화면에서는 시안 크기에서 멈춰요. 풀스크린(2000px+)은 풀스크린 시안처럼 다시 비례해서 키워요.
 // - 스마일게이트 로고 파일이 아직 없어서 임시로 텍스트 워드마크로 표시해요.
 //   public/images/smilegate-logo.png 를 넣으면 이미지로 바뀌어요.
-// - 희망스튜디오 링크 주소를 아직 전달받지 못해서 url을 비워뒀어요(비어 있으면 클릭해도 이동 안 함).
-const FAMILY_SITES: { name: string; url: string }[] = [{ name: "희망스튜디오", url: "" }];
+// - 희망스튜디오 링크: 스마일게이트 소셜임팩트 공식 사이트의 Family Site 목록에 있는 주소(https://www.heemangstudio.org)예요. 새 탭으로 열려요.
+const FAMILY_SITES: { name: string; url: string }[] = [{ name: "희망스튜디오", url: "https://www.heemangstudio.org" }];
 
 export default function Footer() {
   const [open, setOpen] = useState(false);
@@ -19,7 +19,7 @@ export default function Footer() {
 
   return (
     <footer className="mt-12 bg-palette-header md:mt-24">
-      <div className="flex items-start justify-between gap-2 px-[19px] py-5 md:gap-[min(2.8vw,40px)] md:px-[min(4.3vw,62px)] md:py-[min(3.3vw,48px)] 3xl:gap-[2vw] 3xl:px-[5.2vw] 3xl:py-[4vw]">
+      <div className="flex items-start justify-between gap-2 px-[19px] py-5 md:gap-[min(2.8vw,40px)] md:px-[min(4.3vw,62px)] md:py-[min(3.3vw,48px)] 3xl:gap-[7vw] 3xl:pl-[5.2vw] 3xl:pr-[4.2vw] 3xl:py-[2.3vw]">
         {/* 로고 2개 */}
         <div className="flex shrink-0 flex-col items-start gap-2 md:gap-[min(1.7vw,24px)] 3xl:gap-[2vw]">
           {logoFailed ? (

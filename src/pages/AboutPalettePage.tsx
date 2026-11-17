@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useEffect, useRef, useState } from "react";
 
 // Figma 실제 시안 반영 (node 109:2, "ABOUT PALETTE", 1440px 데스크탑 전용 - 모바일/풀스크린 시안은 아직 안 나왔어요).
@@ -332,13 +333,21 @@ export default function AboutPalettePage() {
   const activeCategory = CATEGORIES.find((c) => c.key === activeKey) ?? null;
   // public/images/about-hero.png 파일이 아직 없어서 로드 실패하면 안내 문구만 보여줌
   const [heroImageFailed, setHeroImageFailed] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  useEffect(() => {
+    const update = () => setZoom(window.innerWidth >= 2000 ? window.innerWidth / 1600 : 1);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   return (
     // 풀스크린(2560px) 시안은 데스크탑(1440px) 시안을 약 1.78배로 키운 것과 같은 구성이라,
-    // 2000px 이상에서는 페이지 전체를 1.6배 확대(zoom)해서 시안 비율을 맞췄어요.
-    <div className="px-4 py-6 md:px-6 md:py-10 3xl:[zoom:1.6]">
+    // 2000px 이상(풀스크린)에서는 화면 폭에 비례해서 페이지 전체를 확대(zoom)해요. 2560px에서 1.6배 = 풀스크린 시안 비율.
+    // (예전엔 무조건 1.6배라서 2000~2300px 모니터에서는 내용이 화면보다 커졌어요)
+    <div className="px-4 py-6 md:px-6 md:py-10" style={zoom === 1 ? undefined : ({ zoom } as CSSProperties)}>
       {/* 히어로 */}
-      <section className="mx-auto mb-10 max-w-[1290px] md:mb-20">
+      <section className="mx-auto mb-10 max-w-[1290px] 3xl:max-w-[1494px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
         <h1 className="mb-2 whitespace-nowrap text-[min(4.6vw,18px)] font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl">
@@ -356,7 +365,7 @@ export default function AboutPalettePage() {
         </div>
 
         {/* 데스크탑(109:2): 왼쪽 정렬, 3줄. 1280px 이상에서는 줄바꿈 없이 그대로, 그보다 좁으면 자연스럽게 줄바꿈 */}
-        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:whitespace-nowrap xl:text-[1.94vw] xl:leading-[1.6] 3xl:text-[1.21vw]">
+        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:whitespace-nowrap xl:text-[min(1.94vw,28px)] xl:leading-[1.6] 3xl:text-[31px]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
@@ -381,7 +390,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트가 만드는 창의환경 - 카테고리 4개 탭 + 클릭 시 하단에 상세 목록 등장 */}
-      <section className="mx-auto max-w-[1290px]">
+      <section className="mx-auto max-w-[1290px] 3xl:max-w-[1494px]">
         <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트가 만드는 창의환경</h2>
 
         {/* 모바일 시안(138:286)도 카드 4개를 한 줄에 작게 보여줘서 모바일에서도 4열 유지 */}
@@ -446,7 +455,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트 프로그램 */}
-      <section className="mx-auto mt-10 max-w-[1290px] md:mt-20">
+      <section className="mx-auto mt-10 max-w-[1290px] 3xl:max-w-[1494px] md:mt-20">
         <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
         {/* 시안: 카드 배경 #f7f7f7, 기간은 노란 테두리 흰 알약, 버튼은 노란 테두리 알약. 모바일도 3열(작게) */}
         <ul className="grid grid-cols-3 gap-1.5 md:gap-6">
@@ -492,7 +501,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* IMPACT - "팔레트가 함께 만든 변화" (2026.10 시안) */}
-      <section className="mx-auto mt-10 max-w-[1290px] md:mt-20">
+      <section className="mx-auto mt-10 max-w-[1290px] 3xl:max-w-[1494px] md:mt-20">
         <h2 className="mb-4 text-lg font-bold md:mb-6 md:text-3xl">IMPACT</h2>
         <h3 className="mb-3 text-base font-bold md:mb-5 md:text-2xl">팔레트가 함께 만든 변화</h3>
 
