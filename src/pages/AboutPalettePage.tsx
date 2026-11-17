@@ -11,7 +11,7 @@ import { useEffect, useRef, useState } from "react";
 // ⚠️ 히어로 섹션의 일러스트(돌봄/학습활동/문화체험 등을 원형으로 배치한 그림)는
 // 팔레트 자체 제작 일러스트라서 코드로 재현하지 않고 실제 이미지 파일이 필요해요.
 // Figma에서 내보낸 이미지 URL이 7일 후 만료되는 임시 링크라 이 세션에서 바로 저장은 못 했어요 -
-// public/images/about-hero.png 자리에 그 이미지 파일만 넣어주시면 바로 반영돼요 (아래 <img> 참고).
+// public/images/about-palette.png 자리에 그 이미지 파일만 넣어주시면 바로 반영돼요 (아래 <img> 참고).
 
 interface CategoryDetail {
   role?: string; // 있으면 title 위에 작은 글씨로 표시 (예: "청년 창작 멘토" + "Hope Creator")
@@ -331,7 +331,7 @@ export default function AboutPalettePage() {
   // null = 시안 기본 상태(카드 4개만 보이고 아무것도 펼쳐지지 않은 상태)
   const [activeKey, setActiveKey] = useState<string | null>(null);
   const activeCategory = CATEGORIES.find((c) => c.key === activeKey) ?? null;
-  // public/images/about-hero.png 파일이 아직 없어서 로드 실패하면 안내 문구만 보여줌
+  // public/images/about-palette.png 파일이 아직 없어서 로드 실패하면 안내 문구만 보여줌
   const [heroImageFailed, setHeroImageFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
@@ -375,16 +375,19 @@ export default function AboutPalettePage() {
             (이전에 정사각형+원형으로 잘라서 모바일에서 그림이 잘려 보였어요) 비율은 원본 그대로 유지 */}
         <div className="mt-4 md:mt-8">
           {heroImageFailed ? (
-            <div className="flex aspect-[351/376] w-full items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted">
+            <div className="flex aspect-[911/981] w-full items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted">
               일러스트 이미지 준비중
             </div>
           ) : (
-            <img
-              src="/images/about-hero.png"
-              alt="팔레트가 만드는 창의환경 일러스트"
-              className="h-auto w-full rounded-2xl md:rounded-[20px]"
-              onError={() => setHeroImageFailed(true)}
-            />
+            // 새 일러스트(about-palette.png)는 배경이 투명해서 시안의 하늘색(#d9ecfa) 배경을 CSS로 깔아줘요
+            <div className="overflow-hidden rounded-2xl bg-[#d9ecfa] md:rounded-[20px]">
+              <img
+                src="/images/about-palette.png"
+                alt="팔레트가 만드는 창의환경 일러스트"
+                className="h-auto w-full"
+                onError={() => setHeroImageFailed(true)}
+              />
+            </div>
           )}
         </div>
       </section>

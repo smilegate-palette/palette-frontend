@@ -41,6 +41,7 @@ export interface AdminStory {
   username?: string;
   thumbnailUrl?: string;
   createdAt?: string;
+  link?: string; // 썸네일/제목 클릭 시 새 창으로 열 주소 (백엔드 링크 필드가 생기면 채워짐)
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -121,7 +122,9 @@ function mapAdminStory(story: Record<string, unknown>): AdminStory {
     title: String(story.story_title ?? story.title ?? ""),
     username: (story.story_username ?? story.username) as string | undefined,
     thumbnailUrl: (story.thumbnail_url ?? story.thumbnailUrl) as string | undefined,
-    createdAt: (story.created_at ?? story.createdAt) as string | undefined,
+    createdAt: (story.created_at ?? story.createdAt ?? story.upload_date ?? story.uploadDate) as string | undefined,
+    // 링크 필드명은 백엔드가 아직 확정 전이라 흔한 이름들을 모두 받아요
+    link: (story.story_link ?? story.link ?? story.story_url ?? story.url ?? story.storyLink) as string | undefined,
   };
 }
 
@@ -283,7 +286,7 @@ export async function getOffTheRecordStories(): Promise<AdminStory[]> {
 
 export async function createStory(
   userId: string,
-  payload: { title: string; username: string; thumbnailUrl?: string }
+  payload: { title: string; username: string; thumbnailUrl?: string; link?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(`/api/admin/story/${encodeURIComponent(userId)}`, {
     method: "POST",
@@ -291,6 +294,7 @@ export async function createStory(
       story_title: payload.title,
       story_username: payload.username,
       thumbnail_url: payload.thumbnailUrl,
+      ...(payload.link ? { story_link: payload.link } : {}),
     }),
   });
   return mapAdminStory(raw);
@@ -299,7 +303,7 @@ export async function createStory(
 export async function updateStory(
   userId: string,
   storyId: string,
-  payload: { title: string; username: string; thumbnailUrl?: string }
+  payload: { title: string; username: string; thumbnailUrl?: string; link?: string }
 ): Promise<AdminStory> {
   const raw = await apiFetch<Record<string, unknown>>(
     `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
@@ -309,6 +313,7 @@ export async function updateStory(
         story_title: payload.title,
         story_username: payload.username,
         thumbnail_url: payload.thumbnailUrl,
+        ...(payload.link ? { story_link: payload.link } : {}),
       }),
     }
   );

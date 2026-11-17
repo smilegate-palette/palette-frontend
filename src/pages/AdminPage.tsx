@@ -51,6 +51,7 @@ export default function AdminPage() {
   const [stories, setStories] = useState<AdminStory[]>([]);
   const [storyTitle, setStoryTitle] = useState("");
   const [storyUsername, setStoryUsername] = useState("");
+  const [storyLink, setStoryLink] = useState("");
   const [storyThumbnailFile, setStoryThumbnailFile] = useState<File | null>(null);
   const [storyThumbnailPreview, setStoryThumbnailPreview] = useState("");
   const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
@@ -299,6 +300,7 @@ export default function AdminPage() {
     setEditingStoryId(null);
     setStoryTitle("");
     setStoryUsername("");
+    setStoryLink("");
     setStoryThumbnailFile(null);
     setStoryThumbnailPreview("");
     setStoryError(null);
@@ -308,6 +310,7 @@ export default function AdminPage() {
     setEditingStoryId(story.id);
     setStoryTitle(story.title);
     setStoryUsername(story.username ?? "");
+    setStoryLink(story.link ?? "");
     setStoryThumbnailFile(null);
     setStoryThumbnailPreview(story.thumbnailUrl ?? "");
     setStoryError(null);
@@ -328,6 +331,7 @@ export default function AdminPage() {
         title: storyTitle.trim(),
         username: storyUsername.trim(),
         thumbnailUrl,
+        link: storyLink.trim() || undefined,
       };
       if (editingStoryId) {
         await updateStory(userId, editingStoryId, payload);
@@ -783,6 +787,14 @@ export default function AdminPage() {
             </Field>
             <Field label="이름">
               <input value={storyUsername} onChange={(e) => setStoryUsername(e.target.value)} className={inputClass} />
+            </Field>
+            <Field label="링크 (선택, 썸네일/제목 클릭 시 새 창으로 열려요)">
+              <input
+                value={storyLink}
+                onChange={(e) => setStoryLink(e.target.value)}
+                placeholder="https://"
+                className={inputClass}
+              />
             </Field>
             <Field label="썸네일 (10MB 이하, PNG/JPEG/WEBP/GIF)">
               <input
