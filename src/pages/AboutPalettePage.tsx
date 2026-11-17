@@ -379,8 +379,8 @@ export default function AboutPalettePage() {
               일러스트 이미지 준비중
             </div>
           ) : (
-            // 새 일러스트(about-palette.png)는 배경이 투명해서 시안의 하늘색(#d9ecfa) 배경을 CSS로 깔아줘요
-            <div className="overflow-hidden rounded-2xl bg-[#d9ecfa] md:rounded-[20px]">
+            // 일러스트(about-palette.png)는 배경이 투명한 이미지라 배경색 없이 그대로 보여줘요
+            <div>
               <img
                 src="/images/about-palette.png"
                 alt="팔레트가 만드는 창의환경 일러스트"
