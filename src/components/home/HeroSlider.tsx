@@ -27,38 +27,35 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
   const getSlideAt = (offset: number) =>
     projects[(activeIndex + offset + projects.length) % projects.length];
 
-  const prevSlide = getSlideAt(-1);
   const activeSlide = getSlideAt(0);
-  const nextSlide = getSlideAt(1);
 
   return (
     <section
-      // overflow-x-hidden: 카드 폭 계산이 브레이크포인트랑 안 맞아도 페이지 전체가
-      // 옆으로 밀리지 않고 이 섹션 안에서만 잘리도록 하는 안전장치
-      className="overflow-x-hidden px-4 py-6 md:px-6 md:py-8"
+      // overflow-x-hidden: 양 끝의 카드가 화면 밖으로 살짝 걸쳐 보이도록(시안) 넘치는 부분은 잘라냄
+      className="overflow-x-hidden px-0 py-6 md:py-8"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="flex items-center justify-center gap-2 md:gap-4">
+      {/* 시안(Figma HOME): 카드 5장이 보이는 캐러셀 - 양끝은 화면에 걸쳐 잘리고, 가운데 카드가 가장 크고, 양옆에 ‹ › 화살표.
+          프로젝트가 5개보다 적어도 같은 카드가 순환하며 채워져요. 모바일(sm 미만)은 가운데 카드만 보여요. */}
+      <div className="relative flex items-center justify-center gap-3 md:gap-[min(1.4vw,48px)]">
+        <SlideCard project={getSlideAt(-2)} size="small" className="hidden md:block" />
+        <SlideCard project={getSlideAt(-1)} size="small" className="hidden sm:block" />
+        <SlideCard project={activeSlide} size="large" />
+        <SlideCard project={getSlideAt(1)} size="small" className="hidden sm:block" />
+        <SlideCard project={getSlideAt(2)} size="small" className="hidden md:block" />
+
         <button
           aria-label="이전 프로젝트"
           onClick={() => setActiveIndex((prev) => (prev - 1 + projects.length) % projects.length)}
-          className="text-xl text-palette-muted md:text-2xl"
+          className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl shadow-card sm:left-[calc(50%-150px)] md:left-[calc(50%-230px)] 3xl:left-[calc(50%-350px)]"
         >
           ‹
         </button>
-
-        {/* 모바일(Figma node 52:3)은 좌우 카드가 살짝만 보이는 구조인데, 폭이 좁아 완전히 겹치기 쉬워서
-            일단 sm 미만에서는 메인 카드만 보이는 단순화된 캐러셀로 구현했습니다.
-            좌우 카드가 살짝 보이는 것까지 픽셀 단위로 맞추려면 별도 요청해주세요. */}
-        <SlideCard project={prevSlide} size="small" className="hidden sm:block" />
-        <SlideCard project={activeSlide} size="large" />
-        <SlideCard project={nextSlide} size="small" className="hidden sm:block" />
-
         <button
           aria-label="다음 프로젝트"
           onClick={() => setActiveIndex((prev) => (prev + 1) % projects.length)}
-          className="text-xl text-palette-muted md:text-2xl"
+          className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-xl shadow-card sm:right-[calc(50%-150px)] md:right-[calc(50%-230px)] 3xl:right-[calc(50%-350px)]"
         >
           ›
         </button>
@@ -98,7 +95,7 @@ function SlideCard({
   const dimensions =
     size === "large"
       ? "h-44 w-[260px] md:h-72 md:w-[420px] 3xl:h-[360px] 3xl:w-[640px]"
-      : "h-56 w-72 3xl:h-[304px] 3xl:w-[540px]";
+      : "h-40 w-56 md:h-60 md:w-72 3xl:h-[304px] 3xl:w-[540px]";
   return (
     <Link
       to={`/project/${project.id}`}
