@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthContext";
 import {
   getAdminDashboard,
@@ -46,6 +46,7 @@ const MAX_CURATION = 5;
 
 export default function AdminPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isLoggedIn, userId, role } = useAuth();
   const isAdmin = role === "ADMIN";
   const [projects, setProjects] = useState<Project[] | null>(null); // null = 로딩중
@@ -229,6 +230,18 @@ export default function AdminPage() {
       setEditError("프로젝트 상세 정보를 불러오지 못했어요.");
     }
   };
+
+  // 프로젝트 상세 화면의 관리자 '수정' 버튼(/admin?edit=프로젝트ID)으로 들어오면 해당 프로젝트 수정 폼을 바로 열어요
+  const editParam = searchParams.get("edit");
+  useEffect(() => {
+    if (!editParam || !userId) return;
+    const target = [...(projects ?? []), ...availableProjects].find((p) => String(p.id) === editParam);
+    if (!target) return;
+    setSearchParams({}, { replace: true });
+    startEdit(target);
+    window.setTimeout(() => document.getElementById("project-edit")?.scrollIntoView({ behavior: "smooth" }), 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editParam, userId, projects, availableProjects]);
 
   const submitEdit = async () => {
     if (!userId || !editing) return;
@@ -530,7 +543,7 @@ export default function AdminPage() {
 
         {/* 프로젝트 상세 수정 폼 */}
         {editing && (
-          <div className="mt-4 rounded-2xl bg-white p-4 shadow-strong md:p-6">
+          <div id="project-edit" className="mt-4 rounded-2xl bg-white p-4 shadow-strong md:p-6">
             <h3 className="mb-4 text-base font-bold md:text-xl">
               프로젝트 상세 수정 : {editing.title}
             </h3>

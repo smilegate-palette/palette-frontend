@@ -119,6 +119,14 @@ export default function ProjectDetailPage() {
       <div className="mb-2 flex items-center justify-between gap-3">
         <h1 className="text-lg font-bold md:text-3xl">{project.title}</h1>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <button
+              onClick={() => navigate(`/admin?edit=${project.id}`)}
+              className="rounded-lg border border-[#1ba2ea] px-2.5 py-1.5 text-xs text-[#1ba2ea]"
+            >
+              수정
+            </button>
+          )}
           {(isOwner || isAdmin) && (
             <button
               onClick={handleDelete}

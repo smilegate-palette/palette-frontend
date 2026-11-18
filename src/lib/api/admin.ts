@@ -292,10 +292,10 @@ export async function createStory(
     method: "POST",
     body: JSON.stringify({
       story_title: payload.title,
-      ...(payload.username ? { story_username: payload.username } : {}),
       thumbnail_url: payload.thumbnailUrl,
-      ...(payload.link ? { story_link: payload.link } : {}),
-      ...(payload.date ? { story_date: payload.date } : {}), // 등록일자(YYYY-MM-DD). 필드명은 백엔드 확정 전이라 임시
+      // Swagger(StoryRequest) 확인: 링크는 link, 등록일자는 created_at(date-time)
+      ...(payload.link ? { link: payload.link } : {}),
+      ...(payload.date ? { created_at: `${payload.date}T00:00:00` } : {}),
     }),
   });
   return mapAdminStory(raw);
@@ -312,10 +312,9 @@ export async function updateStory(
       method: "PATCH",
       body: JSON.stringify({
         story_title: payload.title,
-        ...(payload.username ? { story_username: payload.username } : {}),
-        thumbnail_url: payload.thumbnailUrl,
-        ...(payload.link ? { story_link: payload.link } : {}),
-        ...(payload.date ? { story_date: payload.date } : {}),
+          thumbnail_url: payload.thumbnailUrl,
+        ...(payload.link ? { link: payload.link } : {}),
+        ...(payload.date ? { created_at: `${payload.date}T00:00:00` } : {}),
       }),
     }
   );

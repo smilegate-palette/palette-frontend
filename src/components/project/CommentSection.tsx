@@ -4,7 +4,7 @@ import { createComment } from "@/lib/api/comments";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 // 2026.10 기획/백엔드 답변 반영: 비회원도 로그인 없이 닉네임만 입력해 댓글 작성 가능
-// (로그인 안 했으면 user_id를 "null"로 보내고, 서버가 임의 값으로 저장).
+// (비회원은 user_id 경로 없이 POST /api/comment/{project_id}, 닉네임 필수 - 백엔드 답변).
 // 댓글 삭제 권한은 관리자 전용이라 일반 화면에는 수정/삭제 버튼이 없고, 관리자 페이지에서만 삭제해요.
 // TODO: 이모티콘 반응 기능 추가 예정(기획 답변상 가능) - 아직 미구현
 // TODO: 대댓글/댓글 카테고리는 P2(1차 이후) 우선순위라 이번 스프린트 범위 아님
@@ -19,17 +19,23 @@ export default function CommentSection({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { email } = useAuth();
+  const { email, isLoggedIn } = useAuth();
+  const [nickname, setNickname] = useState("");
 
   const handleSubmit = async () => {
     if (!content.trim() || submitting) return;
+    // 백엔드 답변: 비회원은 닉네임을 안 쓰면 댓글 등록이 안 돼요
+    if (!isLoggedIn && !nickname.trim()) {
+      setError("닉네임을 입력해주세요.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
-      // 닉네임 입력칸이 없어져서: 로그인했으면 이메일 앞부분, 비회원이면 비워서 보냄(서버가 임의 이름 부여, 확인 필요)
+      // 로그인했으면 이메일 앞부분을, 비회원이면 입력한 닉네임을 보냄
       const newComment = await createComment({
         projectId,
-        authorName: email ? email.split("@")[0] : undefined,
+        authorName: isLoggedIn && email ? email.split("@")[0] : nickname.trim(),
         content,
       });
       setComments((prev) => [...prev, newComment]);
@@ -45,8 +51,17 @@ export default function CommentSection({
     <section className="mt-8 md:mt-12">
       <h2 className="mb-3 text-base font-bold md:mb-4 md:text-2xl">댓글 {comments.length}개</h2>
 
-        {/* Figma(2026.11) 댓글 입력은 닉네임 칸 없이 입력창 1개 + 등록 버튼 */}
+        {/* Figma(2026.11) 댓글 입력은 입력창 1개 + 등록 버튼. 비회원은 백엔드 요구로 닉네임 칸이 앞에 하나 더 있어요 */}
         <div className="mb-4 flex gap-2 md:mb-6 md:gap-3">
+          {!isLoggedIn && (
+            <input
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              placeholder="닉네임"
+              maxLength={20}
+              className="w-24 shrink-0 rounded-xl bg-palette-input px-3 py-2 text-sm text-black shadow-soft outline-none placeholder:text-palette-muted md:w-48 md:px-6 md:py-3 md:text-xl"
+            />
+          )}
           <input
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -58,7 +73,7 @@ export default function CommentSection({
           />
           <button
             onClick={handleSubmit}
-            disabled={submitting || !content.trim()}
+            disabled={submitting || !content.trim() || (!isLoggedIn && !nickname.trim())}
             className="shrink-0 rounded-xl bg-palette-accent px-4 py-2 text-sm font-semibold text-white shadow-soft disabled:opacity-50 md:px-8 md:py-3 md:text-xl"
           >
             등록
