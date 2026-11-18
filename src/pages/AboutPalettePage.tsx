@@ -335,7 +335,7 @@ export default function AboutPalettePage() {
   const [heroImageFailed, setHeroImageFailed] = useState(false);
   const [zoom, setZoom] = useState(1);
   useEffect(() => {
-    const update = () => setZoom(window.innerWidth >= 2000 ? window.innerWidth / 1600 : 1);
+    const update = () => setZoom(window.innerWidth >= 2000 ? Math.min(window.innerWidth / 1600, 1.6) : 1);
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
@@ -343,7 +343,7 @@ export default function AboutPalettePage() {
 
   return (
     // 풀스크린(2560px) 시안은 데스크탑(1440px) 시안을 약 1.78배로 키운 것과 같은 구성이라,
-    // 2000px 이상(풀스크린)에서는 화면 폭에 비례해서 페이지 전체를 확대(zoom)해요. 2560px에서 1.6배 = 풀스크린 시안 비율.
+    // 2000px 이상(풀스크린)에서는 화면 폭에 비례해서 페이지 전체를 확대(zoom)해요. 2560px에서 1.6배 = 풀스크린 시안 비율이고, 그보다 넓은 화면(4K 등)에서는 1.6배에서 멈춰요(시안이 2560px까지라 더 키우면 다른 페이지보다 훨씬 커 보여요).
     // (예전엔 무조건 1.6배라서 2000~2300px 모니터에서는 내용이 화면보다 커졌어요)
     <div className="break-keep px-4 py-6 md:px-6 md:py-10" style={zoom === 1 ? undefined : ({ zoom } as CSSProperties)}>
       {/* 히어로 */}
