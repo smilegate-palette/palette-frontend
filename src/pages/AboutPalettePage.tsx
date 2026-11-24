@@ -351,8 +351,8 @@ export default function AboutPalettePage() {
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
         {/* 2026.11 새 시안(데스크탑 109:2 / 모바일 136:286 / 풀스크린 127:2): 제목·본문 모두 가운데 정렬,
-            본문 크기 데스크탑 26px / 풀스크린 32px / 모바일 12px, 소개 일러스트는 화면 폭 전체가 아니라 가운데에 963px(모바일 265px) 크기로 */}
-        <h1 className="mb-3 whitespace-nowrap text-center text-[min(4.6vw,18px)] font-bold leading-snug md:mb-6 md:text-3xl xl:text-4xl 3xl:text-[30px]">
+            시안 글자 크기(제목 36px/본문 26px)는 코드 헤더(시안의 약 0.55배)와 비율을 맞추려고 다른 섹션 제목(md:text-2xl)과 같은 크기로 줄여 썼어요. 모바일 12px, 소개 일러스트는 화면 폭 전체가 아니라 가운데에 963px(모바일 265px) 크기로 */}
+        <h1 className="mb-3 whitespace-nowrap text-center text-[min(4.6vw,18px)] font-bold leading-snug md:mb-5 md:text-2xl">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
 
@@ -368,7 +368,7 @@ export default function AboutPalettePage() {
         </div>
 
         {/* 데스크탑·풀스크린: 3줄, 가운데 정렬. 좁은 화면에서는 자연스럽게 줄바꿈 */}
-        <div className="hidden text-center font-medium leading-relaxed text-palette-text md:block md:text-lg xl:text-[min(1.8vw,26px)] xl:leading-[1.73] 3xl:text-[20px] 3xl:leading-[1.625]">
+        <div className="hidden text-center font-medium leading-relaxed text-palette-text md:block md:text-base md:leading-[1.75]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
