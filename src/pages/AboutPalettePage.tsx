@@ -350,44 +350,43 @@ export default function AboutPalettePage() {
       <section className="mx-auto mb-10 max-w-[1290px] 3xl:max-w-[1494px] md:mb-20">
         {/* Figma(node 109:2): 제목+소개글은 가운데 정렬이 아니라 왼쪽 정렬이고, 소개글은 PC에서 정해진 3줄로 끊겨 있어요.
             1280px 이상에서는 그 3줄 그대로(줄바꿈 없이) 보여주고, 그보다 좁으면 자연스럽게 줄바꿈돼요. */}
-        <h1 className="mb-2 whitespace-nowrap text-[min(4.6vw,18px)] font-bold leading-snug md:mb-5 md:text-3xl xl:text-4xl 3xl:text-[34px]">
+        {/* 2026.11 새 시안(데스크탑 109:2 / 모바일 136:286 / 풀스크린 127:2): 제목·본문 모두 가운데 정렬,
+            본문 크기 데스크탑 26px / 풀스크린 32px / 모바일 12px, 소개 일러스트는 화면 폭 전체가 아니라 가운데에 963px(모바일 265px) 크기로 */}
+        <h1 className="mb-3 whitespace-nowrap text-center text-[min(4.6vw,18px)] font-bold leading-snug md:mb-6 md:text-3xl xl:text-4xl 3xl:text-[30px]">
           나의 색깔을 찾아가는 창의 커뮤니티 팔레트
         </h1>
 
-        {/* 모바일(138:286): 왼쪽 정렬, 14px, 시안에서 정해둔 6줄로 끊김 (화면이 좁으면 글자 크기를 같이 줄여서 줄이 안 꺾이게 함) */}
-        <div className="whitespace-pre text-left text-[min(3.59vw,14px)] font-medium leading-[1.43] text-palette-text md:hidden">
+        {/* 모바일: 시안에서 정해둔 줄바꿈 7줄(가운데 빈 줄 포함), 12px / 줄간격 20px */}
+        <div className="whitespace-pre text-center text-[min(3.08vw,12px)] font-medium leading-[1.67] text-palette-text md:hidden">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해</p>
           <p>미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
-          <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을</p>
-          <p>조성하여 아이들이 자신만의 색깔을 발견하고 관심사에서 출발한</p>
-          <p>프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을</p>
-          <p>기를 수 있도록 지원하고 있습니다.</p>
+          <p>&nbsp;</p>
+          <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에</p>
+          <p>창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
+          <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력,</p>
+          <p>문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
         </div>
 
-        {/* 데스크탑(109:2): 왼쪽 정렬, 3줄. 1280px 이상에서는 줄바꿈 없이 그대로, 그보다 좁으면 자연스럽게 줄바꿈 */}
-        <div className="hidden text-left font-medium leading-relaxed text-palette-text md:block md:text-lg xl:text-[min(1.94vw,28px)] xl:leading-[1.6] 3xl:text-[22.5px] 3xl:leading-[1.67]">
+        {/* 데스크탑·풀스크린: 3줄, 가운데 정렬. 좁은 화면에서는 자연스럽게 줄바꿈 */}
+        <div className="hidden text-center font-medium leading-relaxed text-palette-text md:block md:text-lg xl:text-[min(1.8vw,26px)] xl:leading-[1.73] 3xl:text-[20px] 3xl:leading-[1.625]">
           <p>팔레트는 미래세대가 관심사 기반의 AI 디지털 창작 경험을 통해 미래역량을 키워갈 수 있도록 돕는 창의 커뮤니티입니다.</p>
           <p>2019년부터 시작된 팔레트는 '방과 후 돌봄시설'에 창의환경을 조성하여 아이들이 자신만의 색깔을 발견하고</p>
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
         </div>
 
-        {/* 소개 일러스트: 시안에서는 원이 아니라 모서리가 둥근 사각형이고, 콘텐츠 폭에 꽉 차게 들어가요.
-            (이전에 정사각형+원형으로 잘라서 모바일에서 그림이 잘려 보였어요) 비율은 원본 그대로 유지 */}
-        <div className="mt-4 md:mt-8">
+        {/* 소개 일러스트: 배경 없는 이미지를 원본 비율(963:1037 ≈ 911:981) 그대로 가운데에 */}
+        <div className="mt-6 flex justify-center md:mt-[5vw] 3xl:mt-[74px]">
           {heroImageFailed ? (
-            <div className="flex aspect-[911/981] w-full items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted">
+            <div className="flex aspect-[911/981] w-[68%] items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted md:w-full md:max-w-[963px]">
               일러스트 이미지 준비중
             </div>
           ) : (
-            // 일러스트(about-palette.png)는 배경이 투명한 이미지라 배경색 없이 그대로 보여줘요
-            <div>
-              <img
-                src="/images/about-palette.png"
-                alt="팔레트가 만드는 창의환경 일러스트"
-                className="h-auto w-full"
-                onError={() => setHeroImageFailed(true)}
-              />
-            </div>
+            <img
+              src="/images/about-palette.png"
+              alt="팔레트가 만드는 창의환경 일러스트"
+              className="h-auto w-[68%] md:w-full md:max-w-[963px]"
+              onError={() => setHeroImageFailed(true)}
+            />
           )}
         </div>
       </section>
