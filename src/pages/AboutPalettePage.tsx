@@ -374,17 +374,17 @@ export default function AboutPalettePage() {
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
         </div>
 
-        {/* 소개 일러스트: 배경 없는 이미지를 원본 비율(963:1037 ≈ 911:981) 그대로 가운데에 */}
+        {/* 소개 일러스트: 배경 없는 이미지를 원본 비율(911:981) 그대로. 데스크탑은 아래 섹션들과 양옆 여백이 같도록 같은 폭(시안은 963px로 더 좁게 그려져 있음), 모바일은 시안 그대로 68% */}
         <div className="mt-6 flex justify-center md:mt-[5vw] 3xl:mt-[74px]">
           {heroImageFailed ? (
-            <div className="flex aspect-[911/981] w-[68%] items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted md:w-full md:max-w-[963px]">
+            <div className="flex aspect-[911/981] w-[68%] items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted md:w-full">
               일러스트 이미지 준비중
             </div>
           ) : (
             <img
               src="/images/about-palette.png"
               alt="팔레트가 만드는 창의환경 일러스트"
-              className="h-auto w-[68%] md:w-full md:max-w-[963px]"
+              className="h-auto w-[68%] md:w-full"
               onError={() => setHeroImageFailed(true)}
             />
           )}
