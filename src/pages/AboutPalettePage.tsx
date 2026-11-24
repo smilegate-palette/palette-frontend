@@ -374,8 +374,8 @@ export default function AboutPalettePage() {
           <p>관심사에서 출발한 프로젝트를 만들어가며 자기주도성, 협업능력, 문제해결능력을 기를 수 있도록 지원하고 있습니다.</p>
         </div>
 
-        {/* 소개 일러스트: 원본 비율(911:981) 그대로. 섹션 폭 기준 데스크탑 75% / 풀스크린 67% (시안: 963/1290, 1600/2390), 모바일은 시안 그대로 68% */}
-        <div className="mt-6 flex justify-center md:mt-[5vw] 3xl:mt-[74px]">
+        {/* 소개 일러스트: 원본 비율(911:981) 그대로. 아래 섹션들과 같은 폭(데스크탑 1100px / 풀스크린 1250px)으로 양옆 여백을 맞춤, 모바일은 시안 그대로 68% */}
+        <div className="mx-auto mt-6 flex w-full justify-center md:mt-[5vw] md:max-w-[1100px] 3xl:mt-[74px] 3xl:max-w-[1250px]">
           {heroImageFailed ? (
             <div className="flex aspect-[911/981] w-[68%] items-center justify-center rounded-2xl bg-palette-section text-sm text-palette-muted md:w-full">
               일러스트 이미지 준비중
@@ -384,7 +384,7 @@ export default function AboutPalettePage() {
             <img
               src="/images/about-palette.png"
               alt="팔레트가 만드는 창의환경 일러스트"
-              className="h-auto w-[68%] md:w-[75%] 3xl:w-[67%]"
+              className="h-auto w-[68%] md:w-full"
               onError={() => setHeroImageFailed(true)}
             />
           )}
@@ -392,7 +392,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트가 만드는 창의환경 - 카테고리 4개 탭 + 클릭 시 하단에 상세 목록 등장 */}
-      <section className="mx-auto max-w-[1290px] 3xl:max-w-[1494px]">
+      <section className="mx-auto max-w-[1100px] 3xl:max-w-[1250px]">
         <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트가 만드는 창의환경</h2>
 
         {/* 모바일 시안(138:286)도 카드 4개를 한 줄에 작게 보여줘서 모바일에서도 4열 유지 */}
@@ -457,7 +457,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* 팔레트 프로그램 */}
-      <section className="mx-auto mt-10 max-w-[1290px] 3xl:max-w-[1494px] md:mt-20">
+      <section className="mx-auto mt-10 max-w-[1100px] 3xl:max-w-[1250px] md:mt-20">
         <h2 className="mb-4 text-base font-bold md:mb-8 md:text-2xl">팔레트 프로그램</h2>
         {/* 시안: 카드 배경 #f7f7f7, 기간은 노란 테두리 흰 알약, 버튼은 노란 테두리 알약. 모바일도 3열(작게) */}
         <ul className="grid grid-cols-3 gap-1.5 md:gap-6">
@@ -503,7 +503,7 @@ export default function AboutPalettePage() {
       </section>
 
       {/* IMPACT - "팔레트가 함께 만든 변화" (2026.10 시안) */}
-      <section className="mx-auto mt-10 max-w-[1290px] 3xl:max-w-[1494px] md:mt-20">
+      <section className="mx-auto mt-10 max-w-[1100px] 3xl:max-w-[1250px] md:mt-20">
         <h2 className="mb-4 text-lg font-bold md:mb-6 md:text-3xl">IMPACT</h2>
         <h3 className="mb-3 text-base font-bold md:mb-5 md:text-2xl">팔레트가 함께 만든 변화</h3>
 
