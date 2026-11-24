@@ -70,7 +70,7 @@ export default function HomePage() {
       <HeroSlider projects={featuredProjects} />
 
       {curationSections
-        .filter((section) => section.active)
+        .filter((section) => section.active && section.sectionType === "PROJECT_LIST")
         .sort((a, b) => a.displayOrder - b.displayOrder)
         .map((section) => {
           const projects: Project[] = section.projectIds
@@ -98,7 +98,6 @@ export default function HomePage() {
             />
           );
         })}
-
 
       {/* 전체 보기 CTA: 아직 참여 않은 방문자를 PROJECT 목록으로 유도 (컴포넌트 명세 기준) */}
       <div className="flex justify-center px-4 py-8 md:px-6 md:py-10">

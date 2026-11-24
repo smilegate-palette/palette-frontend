@@ -25,7 +25,6 @@ import {
   getCuration,
   saveCurationSection,
   deleteCurationSection,
-  CurationType,
 } from "@/lib/api/admin";
 import { getProjectsFromApi, uploadProjectThumbnail, validateThumbnailFile } from "@/lib/api/projects";
 import { Comment } from "@/lib/types/comment";
@@ -108,10 +107,10 @@ export default function AdminPage() {
   const [selectedCurationId, setSelectedCurationId] = useState<number | null>(null);
   const [sectionTitleDraft, setSectionTitleDraft] = useState("");
   const [sectionDisplayOrderDraft, setSectionDisplayOrderDraft] = useState(1);
-  const [sectionTypeDraft, setSectionTypeDraft] = useState<CurationType>("PROJECT_LIST");
   const [sectionActiveDraft, setSectionActiveDraft] = useState(true);
   const [deletingCurationId, setDeletingCurationId] = useState<number | null>(null);
   const [curationProjectSearch, setCurationProjectSearch] = useState("");
+  const selectedCurationType = sections?.find((section) => section.sectionId === selectedCurationId)?.sectionType;
 
   const load = async (uid: string) => {
     setError(null);
@@ -336,7 +335,6 @@ export default function AdminPage() {
     setSelectedCurationId(section.sectionId);
     setSectionTitleDraft(section.title);
     setSectionDisplayOrderDraft(section.displayOrder);
-    setSectionTypeDraft(section.sectionType);
     setSectionActiveDraft(section.active);
     setCurationProjects(section.projectIds.map((id) => ({
       id,
@@ -349,7 +347,6 @@ export default function AdminPage() {
     setSelectedCurationId(null);
     setSectionTitleDraft("");
     setSectionDisplayOrderDraft((sections?.length ?? 0) + 1);
-    setSectionTypeDraft("PROJECT_LIST");
     setSectionActiveDraft(true);
     setCurationProjects([]);
     setCurationError(null);
@@ -374,7 +371,7 @@ export default function AdminPage() {
         sectionId: selectedCurationId ?? undefined,
         title,
         displayOrder: sectionDisplayOrderDraft,
-        sectionType: sectionTypeDraft,
+        sectionType: selectedCurationType ?? "PROJECT_LIST",
         active: sectionActiveDraft,
         projectIds: curationProjects.map((project) => project.id),
       });
@@ -921,7 +918,7 @@ export default function AdminPage() {
           </div>
         )}
 
-        <div className="mb-4 grid gap-3 md:grid-cols-[1fr_140px_180px] md:items-end">
+        <div className="mb-4 grid gap-3 md:grid-cols-[1fr_140px] md:items-end">
           <Field label="큐레이션 이름">
             <input
               value={sectionTitleDraft}
@@ -933,24 +930,11 @@ export default function AdminPage() {
           <Field label="노출 순서">
             <input
               type="number"
-              min={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : 2}
-              max={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : undefined}
-              value={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : sectionDisplayOrderDraft}
-              onChange={(event) => setSectionDisplayOrderDraft(Math.max(2, Number(event.target.value) || 2))}
-              disabled={sectionTypeDraft === "BOTTOM_CURATION"}
-              className={`${inputClass} ${sectionTypeDraft === "BOTTOM_CURATION" ? "opacity-60" : ""}`}
-            />
-          </Field>
-          <Field label="큐레이션 유형">
-            <select
-              value={sectionTypeDraft}
-              onChange={(event) => setSectionTypeDraft(event.target.value as CurationType)}
-              disabled={sectionTypeDraft === "BOTTOM_CURATION"}
+              min={1}
+              value={sectionDisplayOrderDraft}
+              onChange={(event) => setSectionDisplayOrderDraft(Math.max(1, Number(event.target.value) || 1))}
               className={inputClass}
-            >
-              <option value="PROJECT_LIST">프로젝트 목록</option>
-              <option value="BOTTOM_CURATION">현재 큐레이션</option>
-            </select>
+            />
           </Field>
         </div>
 
@@ -968,7 +952,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => removeCuration(selectedCurationId)}
-              disabled={savingCuration || sectionTypeDraft === "BOTTOM_CURATION"}
+              disabled={savingCuration || selectedCurationType === "BOTTOM_CURATION"}
               className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-600 disabled:opacity-50"
             >
               {deletingCurationId === selectedCurationId ? "삭제 중..." : "큐레이션 삭제"}

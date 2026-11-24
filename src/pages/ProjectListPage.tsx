@@ -42,8 +42,9 @@ export default function ProjectListPage() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const params: ProjectListParams = { sort };
-      if (typeof yearFilter === "number") params.year = yearFilter;
-      if (programFilter) params.program = programFilter;
+      if (typeof yearFilter === "number") {params.year = yearFilter;} 
+      else if (yearFilter === "~2023") {params.year = 2023;}
+      if (programFilter) {params.program = PROGRAM_LABELS[programFilter] as ProgramType;}
       if (typeFilter) params.type = typeFilter;
       if (keyword.trim()) params.keyword = keyword.trim();
 
