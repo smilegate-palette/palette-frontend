@@ -34,7 +34,7 @@ const CATEGORIES: Category[] = [
   {
     key: "content",
     label: "창의 콘텐츠",
-    summary: "관심사를 발견하고 창작으로 표현하는 경험",
+    summary: "관심사를 발견하고 창작으로\n표현하는 경험",
     color: "#ffd400",
     bg: "#fffced",
     icon: "🎨",
@@ -60,7 +60,7 @@ const CATEGORIES: Category[] = [
   {
     key: "community",
     label: "커뮤니티",
-    summary: "또래 창작자와 함께 만나고 성장하는 관계",
+    summary: "또래 창작자와 함께 만나고\n성장하는 관계",
     color: "#ff3c00",
     bg: "#fff6f3",
     icon: "👥",
@@ -81,7 +81,7 @@ const CATEGORIES: Category[] = [
   {
     key: "helper",
     label: "조력자",
-    summary: "탐색과 창작의 과정을 함께하는 멘토·교사·전문가",
+    summary: "탐색과 창작의 과정을 함께하는\n멘토·교사·전문가",
     color: "#20b958",
     bg: "#f5fff9",
     icon: "🧑‍🏫",
@@ -109,7 +109,7 @@ const CATEGORIES: Category[] = [
   {
     key: "partnership",
     label: "파트너십",
-    summary: "창의 환경 조성에 대한 공감을 기반으로 함께 참여하는 파트너",
+    summary: "창의 환경 조성에 대한 공감을\n기반으로 함께 참여하는 파트너",
     color: "#1ba2ea",
     bg: "#ecf9ff",
     icon: "🤝",
@@ -413,7 +413,7 @@ export default function AboutPalettePage() {
               >
                 <p className="text-xl md:text-5xl">{category.icon}</p>
                 <p className="mt-1 text-[10px] font-semibold leading-tight md:mt-3 md:text-2xl">{category.label}</p>
-                <p className="mt-0.5 text-[7px] leading-tight text-palette-muted md:mt-2 md:text-base">{category.summary}</p>
+                <p className="mt-0.5 whitespace-pre-line text-[7px] leading-tight text-palette-muted md:mt-2 md:text-base">{category.summary}</p>
               </button>
             );
           })}
