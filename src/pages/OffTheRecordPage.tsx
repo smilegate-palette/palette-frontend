@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AdminStory, getOffTheRecordStories } from "@/lib/api/admin";
+import { AdminStory, getOffTheRecordStories, getPublicBanners } from "@/lib/api/admin";
 
 // 디자인 담당(김하영) 요청 반영:
 // - 항목: 제목 / 업로드 일자 / 썸네일 / 링크(썸네일·제목 클릭 시 새 창으로 이동)
@@ -32,6 +32,16 @@ export default function OffTheRecordPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [bannerFailed, setBannerFailed] = useState(false);
+  const [bannerUrl, setBannerUrl] = useState("");
+
+  useEffect(() => {
+    getPublicBanners("OFF_THE_RECORD")
+      .then((list) => {
+        setBannerUrl(list[0]?.imageUrl ?? "");
+        setBannerFailed(false);
+      })
+      .catch(() => setBannerFailed(true));
+  }, []);
 
   useEffect(() => {
     getOffTheRecordStories()
@@ -45,9 +55,9 @@ export default function OffTheRecordPage() {
       {/* 상단 배너 (Figma 157:32 / 159:433 / 159:166): 회색(#d9d9d9) 큰 띠 위에 흰색 문구. 높이는 화면 폭 비례(1440 기준 450px).
           배너 이미지는 아직 전달 전이라 회색 띠로 두었고, public/images/off-the-record-banner.png 를 넣으면 이미지로 바뀌어요. */}
       <section className="relative h-[53.8vw] w-full overflow-hidden bg-[#d9d9d9] md:h-[31.25vw]">
-        {!bannerFailed && (
+        {!bannerFailed && bannerUrl && (
           <img
-            src="/images/off-the-record-banner.png"
+            src={bannerUrl}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
             onError={() => setBannerFailed(true)}

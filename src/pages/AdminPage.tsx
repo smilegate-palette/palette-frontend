@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -10,14 +9,23 @@ import {
   approveProject,
   rejectProject,
   updateAdminProject,
-  saveCurationOrder,
   createStory,
   updateStory,
   deleteStory,
   getStories,
+  getAdminBanners,
+  uploadAdminBanner,
+  updateAdminBanner,
+  deleteAdminBanner,
+  BannerPage,
+  Banner,
   CurationSection,
   AdminStory,
   AdminStats,
+  getCuration,
+  saveCurationSection,
+  deleteCurationSection,
+  CurationType,
 } from "@/lib/api/admin";
 import { getProjectsFromApi, uploadProjectThumbnail, validateThumbnailFile } from "@/lib/api/projects";
 import { Comment } from "@/lib/types/comment";
@@ -41,8 +49,8 @@ const STAT_CARDS: {
   { key: "stories", label: "스토리", icon: "📖", color: "#20b958" },
 ];
 
-// 기획 시트 #7: 캐러셀 큐레이션 3개 → 5개로 확대 (일단 5개로 지정)
-const MAX_CURATION = 5;
+// 기획 시트 #7: 캐러셀 큐레이션 3개 → 10개로 확대 (일단 10개로 지정)
+const MAX_CURATION = 10;
 
 export default function AdminPage() {
   const navigate = useNavigate();
@@ -90,13 +98,29 @@ export default function AdminPage() {
   const [draggedProjectId, setDraggedProjectId] = useState<number | null>(null);
   const commentSectionRef = useRef<HTMLElement | null>(null);
 
+  const [bannerPage, setBannerPage] = useState<BannerPage>("HOME");
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState("");
+  const [savingBanner, setSavingBanner] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
+
+  const [selectedCurationId, setSelectedCurationId] = useState<number | null>(null);
+  const [sectionTitleDraft, setSectionTitleDraft] = useState("");
+  const [sectionDisplayOrderDraft, setSectionDisplayOrderDraft] = useState(1);
+  const [sectionTypeDraft, setSectionTypeDraft] = useState<CurationType>("PROJECT_LIST");
+  const [sectionActiveDraft, setSectionActiveDraft] = useState(true);
+  const [deletingCurationId, setDeletingCurationId] = useState<number | null>(null);
+  const [curationProjectSearch, setCurationProjectSearch] = useState("");
+
   const load = async (uid: string) => {
     setError(null);
     try {
-      const [dashboardResult, storiesResult, projectListResult] = await Promise.allSettled([
+      const [dashboardResult, storiesResult, projectListResult, curationResult] = await Promise.allSettled([
         getAdminDashboard(uid),
         getStories(),
         getProjectsFromApi(),
+        getCuration(uid),
       ]);
       if (dashboardResult.status === "rejected") throw dashboardResult.reason;
       const dashboard = dashboardResult.value;
@@ -104,8 +128,16 @@ export default function AdminPage() {
       setTotalProjectCount(dashboard.totalCount ?? dashboard.allProjects.length);
       setStories(dashboard.stories);
       setStats(dashboard.stats ?? null);
-      setSections(dashboard.curation);
-      setCurationProjects(flattenCurationProjects(dashboard.curation).slice(0, MAX_CURATION));
+      const loadedSections = curationResult.status === "fulfilled"
+        ? curationResult.value
+        : dashboard.curation;
+      setSections(loadedSections);
+      const firstSection = [...loadedSections].sort((a, b) => a.displayOrder - b.displayOrder)[0];
+      if (firstSection) {
+        selectCurationSection(firstSection);
+      } else {
+        beginNewCuration();
+      }
       setCurationError(null);
       setComments(null);
       if (storiesResult.status === "fulfilled") {
@@ -300,15 +332,81 @@ export default function AdminPage() {
     setCurationError(null);
   };
 
+  const selectCurationSection = (section: CurationSection) => {
+    setSelectedCurationId(section.sectionId);
+    setSectionTitleDraft(section.title);
+    setSectionDisplayOrderDraft(section.displayOrder);
+    setSectionTypeDraft(section.sectionType);
+    setSectionActiveDraft(section.active);
+    setCurationProjects(section.projectIds.map((id) => ({
+      id,
+      title: section.projectTitles[String(id)] ?? "",
+    })));
+    setCurationError(null);
+  };
+
+  const beginNewCuration = () => {
+    setSelectedCurationId(null);
+    setSectionTitleDraft("");
+    setSectionDisplayOrderDraft((sections?.length ?? 0) + 1);
+    setSectionTypeDraft("PROJECT_LIST");
+    setSectionActiveDraft(true);
+    setCurationProjects([]);
+    setCurationError(null);
+  };
+
   const saveCuration = async () => {
-    if (!userId) return;
+    if (!userId || savingCuration) return;
+    const title = sectionTitleDraft.trim();
+    if (!title) {
+      setCurationError("큐레이션 이름을 입력해주세요.");
+      return;
+    }
+    if (!Number.isSafeInteger(sectionDisplayOrderDraft) || sectionDisplayOrderDraft < 1) {
+      setCurationError("노출 순서는 1 이상의 정수로 입력해주세요.");
+      return;
+    }
+
+    setSavingCuration(true);
+    setCurationError(null);
+    try {
+      const updated = await saveCurationSection(userId, {
+        sectionId: selectedCurationId ?? undefined,
+        title,
+        displayOrder: sectionDisplayOrderDraft,
+        sectionType: sectionTypeDraft,
+        active: sectionActiveDraft,
+        projectIds: curationProjects.map((project) => project.id),
+      });
+      setSections(updated);
+      const saved = updated.find((section) =>
+        selectedCurationId ? section.sectionId === selectedCurationId : section.title === title
+      );
+      if (saved) selectCurationSection(saved);
+      setActionMessage(selectedCurationId ? "큐레이션이 수정됐어요." : "큐레이션이 생성됐어요.");
+    } catch {
+      setCurationError("큐레이션 저장에 실패했어요.");
+    } finally {
+      setSavingCuration(false);
+    }
+  };
+
+  const removeCuration = async (sectionId: number) => {
+    if (!userId || savingCuration) return;
+    if (!window.confirm("이 큐레이션 섹션을 삭제할까요?")) return;
+
+    setDeletingCurationId(sectionId);
     setSavingCuration(true);
     try {
-      await saveCurationOrder(userId, curationProjects.map((project) => project.id));
-      setCurationError(null);
+      await deleteCurationSection(userId, sectionId);
+      const updated = await getCuration(userId);
+      setSections(updated);
+      if (updated[0]) selectCurationSection(updated[0]); else beginNewCuration();
+      setActionMessage("큐레이션이 삭제됐어요.");
     } catch {
-      setCurationError("큐레이션 순서 저장에 실패했어요.");
+      setCurationError("큐레이션 삭제에 실패했어요.");
     } finally {
+      setDeletingCurationId(null);
       setSavingCuration(false);
     }
   };
@@ -375,6 +473,84 @@ export default function AdminPage() {
       if (editingStoryId === story.id) resetStoryForm();
     } catch {
       setStoryError("스토리 삭제에 실패했어요.");
+    }
+  };
+
+  useEffect(() => {
+    if (!isLoggedIn || !isAdmin || !userId) return;
+
+    let cancelled = false;
+    getAdminBanners(userId, bannerPage)
+      .then((list) => {
+        if (cancelled) return;
+        setBanners(list);
+        const current = list[0];
+        setBannerPreview(current?.imageUrl ?? "");
+        setBannerFile(null);
+        setBannerError(null);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setBanners([]);
+        setBannerPreview("");
+        setBannerError("배너를 불러오지 못했어요.");
+      });
+
+    return () => { cancelled = true; };
+  }, [bannerPage, isAdmin, isLoggedIn, userId]);
+
+  const selectBannerFile = (file: File | undefined) => {
+    if (!file) return;
+    const validationError = validateThumbnailFile(file);
+    if (validationError) {
+      setBannerError(validationError);
+      return;
+    }
+    setBannerError(null);
+    setBannerFile(file);
+    setBannerPreview(URL.createObjectURL(file));
+  };
+
+  const submitBanner = async () => {
+    if (!userId) return;
+    if (!bannerFile) {
+      setBannerError("배너 이미지를 선택해주세요.");
+      return;
+    }
+
+    setSavingBanner(true);
+    setBannerError(null);
+    try {
+      const saved = banners.length > 0
+        ? await updateAdminBanner(userId, bannerPage, bannerFile)
+        : await uploadAdminBanner(userId, bannerPage, bannerFile);
+      setBanners([saved]);
+      setBannerPreview(saved.imageUrl);
+      setBannerFile(null);
+      setActionMessage("배너가 저장됐어요.");
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : "배너 저장에 실패했어요.");
+    } finally {
+      setSavingBanner(false);
+    }
+  };
+
+  const removeBanner = async () => {
+    if (!userId || banners.length === 0) return;
+    if (!window.confirm("현재 배너 이미지를 삭제할까요?")) return;
+
+    setSavingBanner(true);
+    setBannerError(null);
+    try {
+      await deleteAdminBanner(userId, bannerPage);
+      setBanners([]);
+      setBannerPreview("");
+      setBannerFile(null);
+      setActionMessage("배너가 삭제됐어요.");
+    } catch (err) {
+      setBannerError(err instanceof Error ? err.message : "배너 삭제에 실패했어요.");
+    } finally {
+      setSavingBanner(false);
     }
   };
 
@@ -710,91 +886,244 @@ export default function AdminPage() {
         )}
       </section>
 
-      {/* HOME 큐레이션 설정 */}
+      {/* 큐레이션 섹션 관리 */}
       <section id="curation-settings" className="mb-10 scroll-mt-20 md:mb-16">
-        <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-lg font-bold md:text-2xl">HOME 큐레이션 설정</h2>
           <button
             type="button"
-            onClick={() => setShowCurationList((open) => !open)}
-            className="shrink-0 rounded-md border border-palette-border bg-white px-3 py-2 text-xs font-semibold hover:border-palette-accent md:text-sm"
+            onClick={beginNewCuration}
+            className="rounded-md border border-palette-border bg-white px-3 py-2 text-xs font-semibold hover:border-palette-accent md:text-sm"
           >
-            {showCurationList ? "목록 닫기" : "프로젝트 목록"}
+            새 큐레이션
           </button>
         </div>
+
         {curationError && <p className="mb-3 text-sm text-red-500">{curationError}</p>}
-        {showCurationList && (
-          <div className="mb-4 rounded-xl bg-white p-4 shadow-strong md:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold md:text-base">프로젝트 선택</h3>
-              <span className="text-xs text-palette-muted">{curationProjects.length} / {MAX_CURATION}</span>
-            </div>
-            {availableProjects.length === 0 ? (
-              <p className="text-sm text-palette-muted">선택할 프로젝트가 없어요.</p>
-            ) : (
-              <ul className="max-h-80 divide-y divide-palette-border overflow-y-auto">
-                {availableProjects.map((project) => {
-                  const projectId = Number(project.id);
-                  const hasNumericId = Number.isSafeInteger(projectId) && projectId > 0;
-                  const selected = hasNumericId && curationProjects.some((item) => item.id === projectId);
-                  return (
-                    <li key={project.id}>
-                      <label className="flex min-h-11 items-center gap-3 py-2 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          disabled={!hasNumericId || (!selected && curationProjects.length >= MAX_CURATION)}
-                          onChange={() => toggleCurationProject(project)}
-                          className="size-4 accent-palette-accent"
-                        />
-                        <span className="min-w-0 flex-1 truncate">{project.title}</span>
-                        {!hasNumericId && (
-                          <span className="text-xs text-palette-muted">ID 확인 필요</span>
-                        )}
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        )}
+
         {sections === null ? (
-          <p className="text-sm text-palette-muted">불러오는 중...</p>
-        ) : curationProjects.length === 0 ? (
-          !curationError && (
-            <p className="text-sm text-palette-muted">큐레이션 프로젝트가 없어요.</p>
-          )
+          <p className="mb-4 text-sm text-palette-muted">큐레이션 목록을 불러오는 중...</p>
+        ) : sections.length === 0 ? (
+          <p className="mb-4 text-sm text-palette-muted">등록된 큐레이션이 없어요.</p>
         ) : (
-          <div className="rounded-xl bg-white p-4 shadow-strong md:p-5">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold md:text-base">프로젝트 순서 (드래그로 조정)</h3>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {[...sections].sort((a, b) => a.displayOrder - b.displayOrder).map((section) => (
               <button
-                onClick={saveCuration}
-                disabled={savingCuration}
-                className="rounded-md bg-[#1ba2ea] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+                key={section.sectionId}
+                type="button"
+                onClick={() => selectCurationSection(section)}
+                className={`border px-3 py-2 text-xs font-semibold md:text-sm ${selectedCurationId === section.sectionId ? "border-palette-accent bg-palette-header text-palette-accent" : "border-palette-border bg-white"}`}
               >
-                {savingCuration ? "저장 중..." : "저장"}
+                {section.title}
+                {!section.active && <span className="ml-2 text-palette-muted">(비활성)</span>}
               </button>
-            </div>
-            <ul className="flex flex-col gap-1.5">
-            {curationProjects.map((project) => (
-              <li
-                key={project.id}
-                draggable
-                onDragStart={() => setDraggedProjectId(project.id)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => moveCurationProject(project.id)}
-                onDragEnd={() => setDraggedProjectId(null)}
-                className={`flex min-h-10 items-center gap-2 rounded-lg bg-[#ededed] px-3 py-1.5 text-sm text-palette-muted md:px-4 md:py-2 ${draggedProjectId === project.id ? "opacity-50" : ""}`}
-              >
-                <span aria-hidden="true" className="cursor-grab text-base leading-none">⠿</span>
-                <span className="truncate">{project.title || `project_id: ${project.id}`}</span>
-              </li>
             ))}
-            </ul>
           </div>
         )}
+
+        <div className="mb-4 grid gap-3 md:grid-cols-[1fr_140px_180px] md:items-end">
+          <Field label="큐레이션 이름">
+            <input
+              value={sectionTitleDraft}
+              onChange={(event) => setSectionTitleDraft(event.target.value)}
+              placeholder="예: 창의워크숍 프로젝트"
+              className={inputClass}
+            />
+          </Field>
+          <Field label="노출 순서">
+            <input
+              type="number"
+              min={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : 2}
+              max={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : undefined}
+              value={sectionTypeDraft === "BOTTOM_CURATION" ? 1 : sectionDisplayOrderDraft}
+              onChange={(event) => setSectionDisplayOrderDraft(Math.max(2, Number(event.target.value) || 2))}
+              disabled={sectionTypeDraft === "BOTTOM_CURATION"}
+              className={`${inputClass} ${sectionTypeDraft === "BOTTOM_CURATION" ? "opacity-60" : ""}`}
+            />
+          </Field>
+          <Field label="큐레이션 유형">
+            <select
+              value={sectionTypeDraft}
+              onChange={(event) => setSectionTypeDraft(event.target.value as CurationType)}
+              disabled={sectionTypeDraft === "BOTTOM_CURATION"}
+              className={inputClass}
+            >
+              <option value="PROJECT_LIST">프로젝트 목록</option>
+              <option value="BOTTOM_CURATION">현재 큐레이션</option>
+            </select>
+          </Field>
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <label className="flex min-h-11 items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={sectionActiveDraft}
+              onChange={(event) => setSectionActiveDraft(event.target.checked)}
+              className="size-4 accent-palette-accent"
+            />
+            홈에 노출
+          </label>
+          {selectedCurationId !== null && (
+            <button
+              type="button"
+              onClick={() => removeCuration(selectedCurationId)}
+              disabled={savingCuration || sectionTypeDraft === "BOTTOM_CURATION"}
+              className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-600 disabled:opacity-50"
+            >
+              {deletingCurationId === selectedCurationId ? "삭제 중..." : "큐레이션 삭제"}
+            </button>
+          )}
+        </div>
+
+        <div className="mb-4 rounded-xl bg-white p-4 shadow-strong md:p-5">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setShowCurationList((open) => !open)}
+              className="rounded-md border border-palette-border px-3 py-2 text-xs font-semibold md:text-sm"
+            >
+              {showCurationList ? "프로젝트 선택 닫기" : "프로젝트 선택"}
+            </button>
+            <span className="text-xs text-palette-muted">{curationProjects.length} / {MAX_CURATION}</span>
+          </div>
+
+          {showCurationList && (
+            <>
+              <input
+                value={curationProjectSearch}
+                onChange={(event) => setCurationProjectSearch(event.target.value)}
+                placeholder="프로젝트명 또는 기관명 검색"
+                className={`${inputClass} mb-3`}
+              />
+              {availableProjects.length === 0 ? (
+                <p className="text-sm text-palette-muted">선택할 프로젝트가 없어요.</p>
+              ) : (
+                <ul className="max-h-80 divide-y divide-palette-border overflow-y-auto">
+                  {availableProjects
+                    .filter((project) => {
+                      const keyword = curationProjectSearch.trim().toLowerCase();
+                      return !keyword
+                        || project.title.toLowerCase().includes(keyword)
+                        || project.organization?.toLowerCase().includes(keyword);
+                    })
+                    .map((project) => {
+                      const projectId = Number(project.id);
+                      const selected = curationProjects.some((item) => item.id === projectId);
+                      return (
+                        <li key={project.id}>
+                          <label className="flex min-h-11 items-center gap-3 py-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={selected}
+                              disabled={!selected && curationProjects.length >= MAX_CURATION}
+                              onChange={() => toggleCurationProject(project)}
+                              className="size-4 accent-palette-accent"
+                            />
+                            <span className="min-w-0 flex-1 truncate">{project.title}</span>
+                            {project.organization && <span className="text-xs text-palette-muted">{project.organization}</span>}
+                          </label>
+                        </li>
+                      );
+                    })}
+                </ul>
+              )}
+            </>
+          )}
+
+          {curationProjects.length === 0 ? (
+            <p className="text-sm text-palette-muted">선택된 프로젝트가 없어요.</p>
+          ) : (
+            <ul className="flex flex-col gap-1.5">
+              {curationProjects.map((project) => (
+                <li
+                  key={project.id}
+                  draggable
+                  onDragStart={() => setDraggedProjectId(project.id)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => moveCurationProject(project.id)}
+                  onDragEnd={() => setDraggedProjectId(null)}
+                  className={`flex min-h-10 items-center gap-2 rounded-lg bg-[#ededed] px-3 py-1.5 text-sm md:px-4 md:py-2 ${draggedProjectId === project.id ? "opacity-50" : ""}`}
+                >
+                  <span aria-hidden="true" className="cursor-grab">⠿</span>
+                  <span className="truncate">{project.title || `project_id: ${project.id}`}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <button
+            type="button"
+            onClick={saveCuration}
+            disabled={savingCuration}
+            className="mt-4 rounded-md bg-[#1ba2ea] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {savingCuration ? "저장 중..." : selectedCurationId ? "큐레이션 수정" : "큐레이션 생성"}
+          </button>
+        </div>
+      </section>
+
+      {/* 배너 설정 */}
+      <section className="mb-8 rounded-xl bg-white p-4 shadow-strong md:p-5">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-bold md:text-lg">배너 설정</h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setBannerPage("HOME")}
+              className={`px-3 py-2 text-xs font-semibold md:text-sm ${bannerPage === "HOME" ? "bg-palette-accent text-white" : "border border-palette-border bg-white"}`}
+            >
+              HOME
+            </button>
+            <button
+              type="button"
+              onClick={() => setBannerPage("OFF_THE_RECORD")}
+              className={`px-3 py-2 text-xs font-semibold md:text-sm ${bannerPage === "OFF_THE_RECORD" ? "bg-palette-accent text-white" : "border border-palette-border bg-white"}`}
+            >
+              OFF THE RECORD
+            </button>
+          </div>
+        </div>
+
+        {bannerError && <p className="mb-3 text-sm text-red-500">{bannerError}</p>}
+
+        <Field label="배너 이미지 (10MB 이하, PNG/JPEG/WEBP/GIF)">
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={(event) => selectBannerFile(event.target.files?.[0])}
+            className={inputClass}
+          />
+        </Field>
+
+        {bannerPreview && (
+          <img
+            src={bannerPreview}
+            alt="배너 미리보기"
+            className="mt-3 h-40 w-full rounded-lg object-cover md:h-64"
+          />
+        )}
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={submitBanner}
+            disabled={savingBanner || !bannerFile}
+            className="rounded-md bg-[#1ba2ea] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          >
+            {savingBanner ? "저장 중..." : banners.length > 0 ? "이미지 수정" : "이미지 업로드"}
+          </button>
+          {banners.length > 0 && (
+            <button
+              type="button"
+              onClick={removeBanner}
+              disabled={savingBanner}
+              className="rounded-md border border-red-300 px-4 py-2 text-sm font-semibold text-red-600 disabled:opacity-50"
+            >
+              배너 삭제
+            </button>
+          )}
+        </div>
       </section>
 
       {/* 스토리 업로드 */}
@@ -880,17 +1209,6 @@ export default function AdminPage() {
 const inputClass =
   "w-full rounded-lg bg-palette-section px-3 py-2.5 text-sm text-black outline-none placeholder:text-palette-muted md:rounded-xl md:px-4 md:py-3";
 
-function flattenCurationProjects(sections: CurationSection[]) {
-  const seen = new Set<number>();
-  return sections.flatMap((section) =>
-    section.projectIds.flatMap((id) => {
-      if (seen.has(id)) return [];
-      seen.add(id);
-      return [{ id, title: section.projectTitles[String(id)] ?? "" }];
-    })
-  );
-}
-
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
@@ -905,5 +1223,7 @@ function formatDate(value?: string) {
   const match = value.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
   if (match) return `${match[1]}년 ${Number(match[2])}월 ${Number(match[3])}일`;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
+  return Number.isNaN(date.getTime())
+    ? value
+    : `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`;
 }

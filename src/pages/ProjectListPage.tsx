@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getProjects } from "@/lib/api/projects";
 import { ApiError } from "@/lib/api/client";
 import { Link } from "react-router-dom";
@@ -28,6 +28,7 @@ export default function ProjectListPage() {
   const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");
+  const searchRequestRef = useRef(0);
 
   const hasActiveFilters = yearFilter !== "ALL" || programFilter || typeFilter || keyword;
 
@@ -39,32 +40,32 @@ export default function ProjectListPage() {
   };
 
   useEffect(() => {
-    const params: ProjectListParams = { sort };
-    if (typeof yearFilter === "number") params.year = yearFilter;
-    if (programFilter) params.program = programFilter;
-    if (typeFilter) params.type = typeFilter;
-    // 컴포넌트 명세 기준: 최소 2자 이상 입력 시 검색 실행
-    if (keyword.length >= 2) params.keyword = keyword;
+    const timer = window.setTimeout(() => {
+      const params: ProjectListParams = { sort };
+      if (typeof yearFilter === "number") params.year = yearFilter;
+      if (programFilter) params.program = programFilter;
+      if (typeFilter) params.type = typeFilter;
+      if (keyword.trim()) params.keyword = keyword.trim();
 
-    setLoading(true);
-    setAuthError(false);
-    setLoadError(null);
-    getProjects(params)
-      .then((res) => setProjects(res.projects))
-      .catch((err) => {
-        // 백엔드가 로그인 여부를 먼저 확인하는 구조라, 비로그인 상태면 401/403이 날 수 있음
-        if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
-          setAuthError(true);
-        } else {
-          setLoadError(
-            err instanceof ApiError
-              ? `서버 오류가 발생했어요 (${err.status})`
-              : "서버에 연결하지 못했어요 (네트워크/CORS/주소 확인 필요)"
-          );
-        }
-        setProjects([]);
-      })
-      .finally(() => setLoading(false));
+      let cancelled = false;
+      setLoading(true);
+      setAuthError(false);
+      setLoadError(null);
+      const requestId = ++searchRequestRef.current;
+      getProjects(params)
+        .then((res) => { if (!cancelled && requestId === searchRequestRef.current) setProjects(res.projects); })
+        .catch((err) => {
+          if (cancelled) return;
+          if (err instanceof ApiError && (err.status === 401 || err.status === 403)) setAuthError(true);
+          else setLoadError(err instanceof ApiError ? `서버 오류가 발생했어요 (${err.status})` : "서버에 연결하지 못했어요 (네트워크/CORS/주소 확인 필요)");
+          setProjects([]);
+        })
+        .finally(() => { if (!cancelled) setLoading(false); });
+
+      return () => { cancelled = true; };
+    }, keyword ? 300 : 0);
+
+    return () => window.clearTimeout(timer);
   }, [yearFilter, programFilter, typeFilter, keyword, sort]);
 
   const resultCountLabel = useMemo(

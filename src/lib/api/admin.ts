@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import { mapProjectResponse, uploadProjectThumbnail } from "./projects";
+import { mapProjectResponse, uploadProjectThumbnail, validateThumbnailFile } from "./projects";
 import { Project } from "@/lib/types/project";
 import { Comment } from "@/lib/types/comment";
 
@@ -220,41 +220,57 @@ export async function updateAdminProject(
 
 // HOME 큐레이션 섹션 순서 관리. 응답 스키마가 Swagger에 제네릭 object라 실제 필드명은 추정치입니다 -
 // 실제 데이터로 확인 전까지는 화면에 아무것도 안 뜰 수 있어요.
+export type CurationType = "BOTTOM_CURATION" | "PROJECT_LIST";
+
 export interface CurationSection {
   sectionId: number;
   title: string;
+  displayOrder: number;
+  sectionType: CurationType;
+  active: boolean;
   projectIds: number[];
   projectTitles: Record<string, string>;
+  thumbnailUrls: Record<string, string>;
 }
 
 function extractSections(raw: unknown): CurationSection[] {
   const list = Array.isArray(raw)
     ? raw
     : raw && typeof raw === "object"
-    ? (raw as Record<string, unknown>).sections ?? (raw as Record<string, unknown>).curations
-    : [];
-  if (!Array.isArray(list)) return [];
-  return (list as Record<string, unknown>[]).map((s) => {
-    const rawSectionProjects = s.sectionProjects ?? s.section_projects;
-    const sectionProjects = Array.isArray(rawSectionProjects)
-      ? rawSectionProjects.map(asRecord)
+      ? (raw as Record<string, unknown>).sections ?? (raw as Record<string, unknown>).curationSections
       : [];
-    const projectTitles = Object.fromEntries(
-      sectionProjects.map((project) => [
-        String(project.projectId ?? project.project_id ?? ""),
-        String(project.projectTitle ?? project.project_title ?? ""),
-      ])
-    );
+  if (!Array.isArray(list)) return [];
+
+  return list.map(asRecord).map((section) => {
+    const rawProjects = Array.isArray(section.sectionProjects)
+      ? section.sectionProjects.map(asRecord)
+      : [];
+    const projectTitles: Record<string, string> = {};
+    const thumbnailUrls: Record<string, string> = {};
+    const projectIds = rawProjects
+      .map((project) => {
+        const id = Number(project.projectId);
+        if (!Number.isSafeInteger(id) || id <= 0) return null;
+        projectTitles[String(id)] = String(project.projectTitle ?? "");
+        thumbnailUrls[String(id)] = String(project.thumbnailUrl ?? project.thumbnail_url ?? "");
+        return id;
+      })
+      .filter((id): id is number => id !== null)
+      .sort((a, b) => {
+        const pa = rawProjects.find((project) => Number(project.projectId) === a);
+        const pb = rawProjects.find((project) => Number(project.projectId) === b);
+        return Number(pa?.displayOrder ?? 0) - Number(pb?.displayOrder ?? 0);
+      });
+
     return {
-      sectionId: Number(s.section_id ?? s.sectionId ?? 0),
-      title: (s.title as string) ?? (s.name as string) ?? "",
-      projectIds: (
-        (s.project_ids ??
-          s.projectIds ??
-          sectionProjects.map((project) => project.projectId ?? project.project_id)) as
-          (number | string)[]
-      ).map(Number),
+      sectionId: Number(section.sectionId ?? section.section_id ?? 0),
+      title: String(section.title ?? ""),
+      displayOrder: Number(section.displayOrder ?? section.display_order ?? 0),
+      sectionType: section.sectionType === "PROJECT_LIST" ? "PROJECT_LIST" : "BOTTOM_CURATION",
+      active: section.active !== false,
+      projectIds,
       projectTitles,
+      thumbnailUrls,
     };
   });
 }
@@ -264,14 +280,117 @@ export async function getCuration(userId: string): Promise<CurationSection[]> {
   return extractSections(raw);
 }
 
-export async function saveCurationOrder(
+export async function saveCurationSection(
   userId: string,
-  projectIds: number[]
-): Promise<void> {
-  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/curation`, {
-    method: "POST",
-    body: JSON.stringify({ section_id: 1, projectIds }),
-  });
+  payload: {
+    sectionId?: number;
+    title: string;
+    displayOrder: number;
+    sectionType: CurationType;
+    active: boolean;
+    projectIds: number[];
+  }
+): Promise<CurationSection[]> {
+  const isUpdate = Number.isSafeInteger(payload.sectionId) && Number(payload.sectionId) > 0;
+  const body = {
+    section_id: isUpdate ? payload.sectionId : null,
+    title: payload.title,
+    displayOrder: payload.displayOrder,
+    sectionType: payload.sectionType,
+    active: payload.active,
+    projectIds: payload.projectIds,
+  };
+  const raw = await apiFetch<unknown>(
+    isUpdate
+      ? `/api/admin/${encodeURIComponent(userId)}/curation/section/${payload.sectionId}`
+      : `/api/admin/${encodeURIComponent(userId)}/curation/section`,
+    { method: isUpdate ? "PUT" : "POST", body: JSON.stringify(body) }
+  );
+  return extractSections(raw);
+}
+
+export async function deleteCurationSection(userId: string, sectionId: number): Promise<void> {
+  await apiFetch<void>(
+    `/api/admin/${encodeURIComponent(userId)}/curation/section/${encodeURIComponent(String(sectionId))}`,
+    { method: "DELETE" }
+  );
+}
+
+export interface PublicHomeSettings {
+  curationSections: CurationSection[];
+}
+
+export async function getPublicHomeSettings(): Promise<CurationSection[]> {
+  const raw = await apiFetch<Record<string, unknown>>("/api/home");
+  return extractSections(raw.curationSections ?? raw.curation_sections ?? raw);
+}
+
+export type BannerPage = "HOME" | "OFF_THE_RECORD";
+
+export interface Banner {
+  bannerId: number;
+  imageUrl: string;
+  displayOrder: number;
+  active: boolean;
+  bannerPage: BannerPage;
+}
+
+function mapBanner(raw: Record<string, unknown>): Banner {
+  const page = String(raw.bannerPage ?? raw.banner_page ?? "HOME").toUpperCase();
+  return {
+    bannerId: Number(raw.bannerId ?? raw.banner_id ?? raw.id ?? 0),
+    imageUrl: String(raw.imageUrl ?? raw.image_url ?? ""),
+    displayOrder: Number(raw.displayOrder ?? raw.display_order ?? 0),
+    active: raw.active !== false,
+    bannerPage: page === "OFF_THE_RECORD" || page === "STORY" ? "OFF_THE_RECORD" : "HOME",
+  };
+}
+
+export async function getAdminBanners(userId: string, page: BannerPage): Promise<Banner[]> {
+  const raw = await apiFetch<unknown>(
+    `/api/admin/${encodeURIComponent(userId)}/banner?page=${encodeURIComponent(page)}`
+  );
+  return extractArray(raw, ["banners", "items", "content"]).map(mapBanner);
+}
+
+export async function uploadAdminBanner(userId: string, page: BannerPage, file: File): Promise<Banner> {
+  const validationError = validateThumbnailFile(file);
+  if (validationError) throw new Error(validationError);
+
+  const formData = new FormData();
+  formData.append("file", file);
+  const raw = await apiFetch<Record<string, unknown>>(
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image`,
+    { method: "POST", body: formData }
+  );
+  return mapBanner(raw);
+}
+
+export async function updateAdminBanner(userId: string, page: BannerPage, file: File): Promise<Banner> {
+  const validationError = validateThumbnailFile(file);
+  if (validationError) throw new Error(validationError);
+
+  const formData = new FormData();
+  formData.append("file", file);
+  const raw = await apiFetch<Record<string, unknown>>(
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image`,
+    { method: "PUT", body: formData }
+  );
+  return mapBanner(raw);
+}
+
+export async function deleteAdminBanner(userId: string, page: BannerPage): Promise<void> {
+  await apiFetch<void>(
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}`,
+    { method: "DELETE" }
+  );
+}
+
+export async function getPublicBanners(page: BannerPage): Promise<Banner[]> {
+  const raw = await apiFetch<unknown>(`/api/banner?page=${encodeURIComponent(page)}`);
+  return extractArray(raw, ["banners", "items", "content"])
+    .map(mapBanner)
+    .filter((banner) => banner.active && banner.imageUrl);
 }
 
 export async function getStories(): Promise<AdminStory[]> {
@@ -293,7 +412,6 @@ export async function createStory(
     body: JSON.stringify({
       story_title: payload.title,
       thumbnail_url: payload.thumbnailUrl,
-      // Swagger(StoryRequest) 확인: 링크는 link, 등록일자는 created_at(date-time)
       ...(payload.link ? { link: payload.link } : {}),
       ...(payload.date ? { created_at: `${payload.date}T00:00:00` } : {}),
     }),
@@ -312,7 +430,7 @@ export async function updateStory(
       method: "PATCH",
       body: JSON.stringify({
         story_title: payload.title,
-          thumbnail_url: payload.thumbnailUrl,
+        thumbnail_url: payload.thumbnailUrl,
         ...(payload.link ? { link: payload.link } : {}),
         ...(payload.date ? { created_at: `${payload.date}T00:00:00` } : {}),
       }),
@@ -326,4 +444,11 @@ export async function deleteStory(userId: string, storyId: string): Promise<void
     `/api/admin/story/${encodeURIComponent(userId)}/${encodeURIComponent(storyId)}`,
     { method: "DELETE" }
   );
+}
+
+export async function saveCurationOrder(userId: string, projectIds: number[]): Promise<void> {
+  await apiFetch<void>(`/api/admin/${encodeURIComponent(userId)}/curation`, {
+    method: "POST",
+    body: JSON.stringify({ section_id: 1, projectIds }),
+  });
 }
