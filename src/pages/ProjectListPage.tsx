@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getProjects } from "@/lib/api/projects";
 import { ApiError } from "@/lib/api/client";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   Project,
   ProjectListParams,
@@ -24,7 +24,12 @@ export default function ProjectListPage() {
   // 401/403 외의 실패(서버 오류, 네트워크/CORS 차단 등)는 빈 목록과 구분되도록 원인을 화면에 표시
   const [loadError, setLoadError] = useState<string | null>(null);
   const [yearFilter, setYearFilter] = useState<(typeof YEAR_FILTERS)[number]>("ALL");
-  const [programFilter, setProgramFilter] = useState<ProgramType | null>(null);
+  // About Palette의 '창작 프로젝트 보기' 버튼에서 /project?program=... 으로 들어오면 그 프로그램으로 미리 필터
+  const [searchParams] = useSearchParams();
+  const initialProgram = searchParams.get("program");
+  const [programFilter, setProgramFilter] = useState<ProgramType | null>(
+    PROGRAM_OPTIONS_ALL.includes(initialProgram as ProgramType) ? (initialProgram as ProgramType) : null
+  );
   const [typeFilter, setTypeFilter] = useState<ProjectType | null>(null);
   const [keyword, setKeyword] = useState("");
   const [sort, setSort] = useState<"latest" | "popular">("latest");

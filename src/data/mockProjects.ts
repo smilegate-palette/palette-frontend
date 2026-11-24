@@ -5,7 +5,7 @@ import { Comment } from "@/lib/types/comment";
 // 나머지 화면은 아래 mock 데이터로 우선 개발합니다.
 // 실제 API 연동 시 src/lib/api 쪽 USE_MOCK 플래그만 끄면 됩니다.
 
-export const mockPrograms: ProgramType[] = ["창의워크숍", "유스파티"];
+export const mockPrograms: ProgramType[] = ["팔레트 창의워크숍", "팔레트 유스파티"];
 
 export const mockRegions = ["서울", "전북 전주", "강원 강릉", "경기 성남", "경기 하남"];
 

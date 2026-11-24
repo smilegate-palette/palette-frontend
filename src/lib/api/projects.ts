@@ -6,12 +6,12 @@ import { getStoredUserId } from "@/lib/auth/token";
 // 서버에서 내려오는 프로그램 이름을 화면에서 쓰는 값으로 맞춰요 ("팔레트 창의워크숍" 같은 이름으로 와도 처리)
 function normalizeProgram(value: unknown): Project["program"] {
   const name = String(value ?? "").replace(/\s/g, "");
-  if (name.includes("창의워크숍")) return "창의워크숍";
-  if (name.includes("유스파티")) return "유스파티";
+  if (name.includes("창의워크숍")) return "팔레트 창의워크숍";
+  if (name.includes("유스파티")) return "팔레트 유스파티";
   if (name.includes("플레이어") || name.includes("어드벤처")) return "팔레트 플레이어";
   if (name.includes("부스터")) return "드림 부스터 캠프";
   if (name === "기타") return "기타";
-  return "창의워크숍";
+  return "기타";
 }
 
 
