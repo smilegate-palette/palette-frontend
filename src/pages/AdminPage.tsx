@@ -31,7 +31,7 @@ import {
 import { getProjectsFromApi, uploadProjectThumbnail, validateThumbnailFile } from "@/lib/api/projects";
 import { Comment } from "@/lib/types/comment";
 import { ApiError } from "@/lib/api/client";
-import { Project, ProjectType, PROJECT_TYPES } from "@/lib/types/project";
+import { Project, ProjectType, ProgramType, PROJECT_TYPES, PROGRAM_OPTIONS_ALL } from "@/lib/types/project";
 
 // 관리자 페이지. Figma 관리자 시안(데스크탑 node 92:2 / 모바일 99:540 / 풀스크린 99:386) 기준으로
 // 상단 통계 카드 + 승인 대기 프로젝트 테이블(승인/반려/수정) + 최근 댓글 + HOME 큐레이션 순서로 구성.
@@ -81,6 +81,8 @@ export default function AdminPage() {
 
   const [editing, setEditing] = useState<Project | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [editProgram, setEditProgram] = useState<ProgramType>("기타");
+  const [editYear, setEditYear] = useState(new Date().getFullYear());
   const [editCategory, setEditCategory] = useState<ProjectType | "">("");
   const [editDescription, setEditDescription] = useState("");
   const [editOrganization, setEditOrganization] = useState("");
@@ -239,6 +241,8 @@ export default function AdminPage() {
   const startEdit = async (project: Project) => {
     setEditing(project);
     setEditTitle(project.title);
+    setEditProgram(project.program);
+    setEditYear(project.year);
     setEditCategory(project.types[0] ?? "");
     setEditDescription(project.description ?? "");
     setEditOrganization(project.organization ?? "");
@@ -254,6 +258,8 @@ export default function AdminPage() {
       if (!details) return;
       setEditing((current) => current?.id === project.id ? details : current);
       setEditTitle(details.title || project.title);
+      setEditProgram(details.program || project.program);
+      setEditYear(details.year || project.year);
       setEditCategory(details.types[0] ?? project.types[0] ?? "");
       setEditDescription(details.description ?? project.description ?? "");
       setEditOrganization(details.organization ?? project.organization ?? "");
@@ -287,6 +293,8 @@ export default function AdminPage() {
     try {
       await updateAdminProject(userId, editing.id, {
         title: editTitle,
+        program: editProgram,
+        year: editYear,
         category: editCategory,
         description: editDescription,
         organization: editOrganization,
@@ -729,6 +737,27 @@ export default function AdminPage() {
                 <input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="프로그램">
+                <select
+                  value={editProgram}
+                  onChange={(e) => setEditProgram(e.target.value as ProgramType)}
+                  className={inputClass}
+                >
+                  {PROGRAM_OPTIONS_ALL.map((program) => (
+                    <option key={program} value={program}>{program}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="연도">
+                <input
+                  type="number"
+                  min={1900}
+                  max={9999}
+                  value={editYear}
+                  onChange={(e) => setEditYear(Number(e.target.value))}
                   className={inputClass}
                 />
               </Field>

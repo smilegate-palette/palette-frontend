@@ -193,6 +193,8 @@ export async function updateAdminProject(
   projectId: string,
   payload: {
     title: string;
+    program: string;
+    year: number;
     category: string;
     description: string;
     organization: string;
@@ -208,6 +210,8 @@ export async function updateAdminProject(
     method: "PATCH",
     body: JSON.stringify({
       project_title: payload.title,
+      program_name: payload.program,
+      year: payload.year,
       category: payload.category,
       description: payload.description,
       organization: payload.organization,
