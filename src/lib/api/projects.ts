@@ -286,7 +286,7 @@ export async function deleteProject(projectId: string): Promise<void> {
 // 2026.09.06 신규: "응원해요" 좋아요 등록/취소. 서버에 "내가 이미 눌렀는지" 조회하는 API가
 // 없어서, 프론트에서는 이번 세션에 누른 것만 기억하는 로컬 상태로 liked 여부를 관리함 (LikeButton 참고).
 // 비회원은 댓글과 같은 방식으로 user_id 경로를 생략해요: POST /api/project/{project_id}/like
-// ⚠️ 2026.11 기준 Swagger에는 user_id 없는 좋아요 경로가 아직 없어요(백엔드 추가 필요). 추가되기 전에는 비회원 좋아요가 실패할 수 있어요.
+// 2026.11 기준 Swagger에 비회원 좋아요 경로(POST/DELETE /api/project/{project_id}/like)가 추가되어 있음. 비회원 취소(DELETE)는 아직 프론트에서 쓰지 않음(한 번 누르면 취소 불가).
 export async function likeProject(projectId: string, userId?: string | null): Promise<void> {
   const base = `/api/project/${projectId}/like`;
   await apiFetch<void>(userId ? `${base}/${encodeURIComponent(userId)}` : base, {

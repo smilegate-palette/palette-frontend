@@ -67,11 +67,17 @@ src/
   - **Figma엔 있지만 매칭되는 API가 없어서 못 만든 부분들**: "최근 댓글" 전체 목록(프로젝트를 가로지르는 댓글 조회 API 없음, 프로젝트별 조회만 가능), 댓글 "비공개" 토글(숨김 처리 API 없음), "스토리 업로드" 탭(STORY 관리 API 없음), 승인 대기 목록의 "전체 선택" 일괄 처리(일괄 승인/반려 API 없음) - 전부 화면에 준비중 안내나 미표시로 처리해뒀어요
   - 프로젝트 썸네일은 인증된 `POST /api/project/thumbnail` multipart 요청으로 Supabase Storage에 올린 뒤 URL을 프로젝트 등록/수정 API에 저장합니다 (10MB 이하 PNG/JPEG/WEBP/GIF). 기관명, 참여자 목록, 프로젝트 URL도 등록·관리자 수정에서 저장합니다.
   - HOME 큐레이션 순서는 Figma엔 드래그 앤 드롭인데, 별도 라이브러리 없이 ▲▼ 버튼으로 단순화해서 구현
-- **비회원 댓글·좋아요**: 비회원은 경로 user_id에 문자열 `null`을 보내는 방식(백엔드 합의). 비회원 좋아요는 취소 불가+localStorage 중복 방지. 댓글 삭제는 관리자 페이지 전용. 관리자 스토리 등록 폼(`createStory`, 이미지는 data URL로 `thumbnail_url`에 전송)
+- **비회원 댓글·좋아요**: 비회원 댓글은 `POST /api/comment/{project_id}`(닉네임 필수, 입력창 노출), 비회원 좋아요는 `POST /api/project/{project_id}/like`(user_id 없음)로 전송합니다. 회원은 기존처럼 `/{user_id}` 경로. 비회원 좋아요는 취소 불가+localStorage 중복 방지. 댓글 삭제는 관리자 페이지 전용.
+- **스토리/오프 더 레코드**: 관리자 스토리 등록·수정(제목, 썸네일, 링크, 등록일자 → `story_title/thumbnail_url/link/created_at`). 오프 더 레코드 페이지는 상단 배너(`GET /api/banner?page=OFF_THE_RECORD`, 없으면 회색) + 카드 그리드(2열/4열, 최신순), 링크가 있으면 새 탭으로 연결.
+- **배너 관리자/홈 데이터**: 페이지(HOME/OFF_THE_RECORD/STORY)·크기별 배너 이미지 등록/수정/삭제(`/api/admin/{user_id}/banner/{page}/image`). 홈은 `GET /api/home`(banners + curationSections) 사용. HOME 큐레이션은 관리자에서 최대 5개까지 지정.
+- **프로그램 필터**: 서버 `program_name` 전체 이름(팔레트 창의워크숍/팔레트 유스파티/드림 부스터 캠프 등)으로 필터, `normalizeProgram()`이 매핑(그 외 "기타"). About 페이지 "창작 프로젝트 보기"는 `/project?program=...`로 연결. 형태(category)에서 AI는 서버 enum에 없어 제외.
 - **ABOUT PALETTE 페이지 Figma 반영(`AboutPalettePage.tsx`, node 109:2 데스크탑, 아직 모바일/풀스크린 시안 없음)**: 히어로 소개 문구 + 카테고리 4개(창의 콘텐츠/커뮤니티/조력자/파트너십) 탭 클릭 시 하단에 상세 목록이 펼쳐지는 인터랙션까지 구조대로 구현
   - 10월 시안 업데이트 반영: 팔레트 프로그램 카드 6종 + IMPACT 수치 + 성장 지표/후기 섹션, 풀스크린(node 127:2) 폭 대응. 수치/후기는 현재 코드 상수이며, 관리자 수정 기능은 백엔드 API 필요
   - IMPACT 개편(큰 카드/작은 지표/색 카드 + 카운트업, `CountUp` 컴포넌트), 조력자 직함·이름 위계, 팔레트 유스파티 카드 제외. 푸터(`components/layout/Footer.tsx`, node 136:944) 전 페이지 적용 - 스마일게이트 로고·패밀리 사이트 링크는 자료 대기 중(`FAMILY_SITES` 배열, `public/images/smilegate-logo.png`)
-  - 히어로 일러스트는 팔레트 자체 제작 그림이라 코드로 재현 불가 - `public/images/about-hero.png`에 파일만 넣으면 바로 노출되도록 준비만 해둠 (현재는 "일러스트 이미지 준비중" 안내만 표시)
+  - 히어로 일러스트는 `public/images/about-palette.png`(투명 배경)를 사용. 파일 교체 후 배포/캐시 새로고침 필요
+  - 2026.11 반영: 프로그램 카드 6종(드림 온 페스타/아하! 팔레트/팔레트 어드벤처/팔레트 창의워크숍/팔레트 유스파티/드림 부스터 캠프), 카테고리 요약 줄바꿈, 일러스트~푸터 구간 좌우 여백 통일(`max-w-[1100px]`, 3xl `1250px`), 소개 3줄은 폭 유지. 2000px 이상에서는 JS zoom(최대 1.6배)으로 확대, 히어로 문구는 고정 크기
+  - 푸터: 헤더 비율에 맞춰 시안 대비 0.55배로 축소, © 2026, Family Site에 희망스튜디오(https://www.heemangstudio.org) 연결
+  - HOME 히어로 캐러셀: 5장 구조(좌우 2장씩), 모바일은 중앙 1장
   - 큐레이션 조회(`GET /api/admin/{user_id}/curation`) 응답 스키마가 제네릭 object라 필드명을 추정해서 매핑함 - 실제 데이터로 확인 전까지는 화면에 아무것도 안 뜰 수 있어요
   - 대시보드 응답(`GET /api/admin/{user_id}`)도 제네릭 object라 실제 필드명은 추정치입니다 - 실제 데이터로 확인 필요
 - **프로젝트 상세 조회, 댓글 조회/등록 실제 연동 완료**: `GET /api/project/{project_id}`, `GET /api/comment/{project_id}`, `POST /api/comment/{project_id}/{user_id}` 연동. 댓글 등록은 API 구조상 로그인이 필요해서, 비로그인 상태에서는 댓글 입력창 대신 로그인 유도 문구가 보이도록 처리 (아래 TODO 참고)
@@ -95,7 +101,7 @@ src/
 
 백엔드에 아직 해당 엔드포인트가 없어서, `VITE_USE_MOCK` 값과 무관하게 코드에서 자동으로 mock을 사용하도록 처리해뒀습니다 (`src/lib/api/*.ts`에 각각 표시):
 
-- 홈 큐레이션 (`GET /api`를 시도는 하지만 실제 데이터 형태 미확인)
+- 없음 - 홈은 `GET /api/home`으로 실제 연동. 단 `VITE_USE_MOCK`이 `false`가 아니면 mock이 기본이므로 배포 환경(Vercel)에 `VITE_USE_MOCK=false` 필수
 
 ~~프로젝트 상세 조회, 댓글 조회/등록, 좋아요~~ → 엔드포인트 추가되어 실제 연동으로 전환 완료 (아래 참고)
 
@@ -111,7 +117,8 @@ src/
 - [x] ~~로그인 응답에 `user_id` 없음~~ → 2026.08.11 백엔드에서 로그인 응답에 `user_id` 추가해주셔서 반영 완료. `POST /api/project/{user_id}`에 실제 user_id를 사용하도록 고쳤어요. **다만 필드명이 정확히 `user_id`가 맞는지는 확인 못 해서, 다르면 `src/lib/api/auth.ts`의 `login`/`socialLogin` 매핑만 고치면 돼요**
 - [ ] `GET /api/project` 쿼리 파라미터(연도/형태/검색어/정렬) 아직 없음
 - [x] ~~상세 조회, 댓글, 관리자 엔드포인트 아직 Swagger에 없음~~ → 전부 추가되어 반영 완료
-- [ ] **댓글 등록(`POST /api/comment/{project_id}/{user_id}`)이 user_id를 경로에 요구해서, 로그인한 사용자만 댓글을 쓸 수 있는 구조예요.** 이전에 기획 문서 기준으로 "비회원도 댓글 작성 가능"으로 만들어뒀었는데 실제 API랑 안 맞아서, 일단 로그인 안 하면 댓글 입력창 자체를 숨기고 로그인 링크를 보여주도록 바꿨어요. 비회원 댓글이 꼭 필요하면 백엔드에 그것도 지원해달라고 해야 할 것 같아요
+- [x] ~~비회원 댓글~~ → 백엔드가 `POST /api/comment/{project_id}`(닉네임 필수)를 추가해 반영 완료. 아래는 과거 기록:
+- [x] ~~댓글 등록(`POST /api/comment/{project_id}/{user_id}`)이 user_id를 경로에 요구해서, 로그인한 사용자만 댓글을 쓸 수 있는 구조예요.** 이전에 기획 문서 기준으로 "비회원도 댓글 작성 가능"으로 만들어뒀었는데 실제 API랑 안 맞아서, 일단 로그인 안 하면 댓글 입력창 자체를 숨기고 로그인 링크를 보여주도록 바꿨어요. 비회원 댓글이 꼭 필요하면 백엔드에 그것도 지원해달라고 해야 할 것 같아요
 - [ ] 프로젝트 상세/댓글 조회 응답 스키마가 Swagger에 제네릭 `object`로만 나와 있어서 실제 필드명을 추정해서 매핑해뒀음(`mapProjectResponse`/`mapCommentResponse`) - 실제 데이터 들어오면 재확인 필요
 - [x] ~~"응원해요" 좋아요 API 스펙~~ → 2026.09.06 확인 및 연동 완료: `POST/DELETE /api/project/{project_id}/like/{user_id}` 호출하도록 `LikeButton` 수정. **다만 서버에 "내가 이미 눌렀는지" 조회하는 API가 없어서, liked(★/☆) 상태는 이번 방문에서 누른 것만 기억하는 로컬 상태입니다 - 새로고침하면 눌렀던 기록은 사라져요 (카운트 자체는 매번 서버 값 기준).** 비로그인 상태에서 누르면 로그인 페이지로 이동
 - [ ] 댓글 이모티콘 API 스펙 (P1)
@@ -138,3 +145,11 @@ src/
 - P0(1차 필수): HOME, PROJECT 목록/상세, 업로드폼, 로그인/마이페이지 기본, 관리자 승인/반려/비공개, 기본 댓글
 - P1(가능하면 포함): 좋아요, 댓글 이모티콘, 이메일 알림, 관리자 직접 수정, HOME 큐레이션/배너 관리
 - P2(1차 이후): 대댓글, 댓글 카테고리, 큐레이션/통계 고도화, 운영 자동화
+
+## 남은 확인 사항 (2026.11)
+
+- [ ] 홈 배너: 서버 배너 `size` 중 화면 크기에 맞는 것을 고르는 로직 필요(현재 첫 번째 사용), HOME 배너 imageUrl 비어 있음
+- [ ] 비회원 좋아요 취소 API 사용 여부, `/api/user/{user_id}` PATCH/DELETE(마이페이지) 필요 여부
+- [ ] 배포 사이트(https)에서 백엔드(http) 호출 시 mixed content/CORS 확인
+- [ ] Story 보기 버튼 연결 대상, 큐레이션 관리·긴 설명 업로드·승인된 프로젝트 수정 실제 테스트
+- [ ] 스마일게이트 로고(`public/images/smilegate-logo.png`), 청년 멘토 아이콘 자료 대기
