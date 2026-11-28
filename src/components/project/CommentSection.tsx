@@ -19,7 +19,7 @@ export default function CommentSection({
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { email, isLoggedIn } = useAuth();
+  const { username, isLoggedIn } = useAuth();
   const [nickname, setNickname] = useState("");
 
   const handleSubmit = async () => {
@@ -32,10 +32,10 @@ export default function CommentSection({
     setSubmitting(true);
     setError(null);
     try {
-      // 로그인했으면 이메일 앞부분을, 비회원이면 입력한 닉네임을 보냄
+      // 로그인 회원은 계정 username을, 비회원은 입력한 닉네임을 보냄
       const newComment = await createComment({
         projectId,
-        authorName: isLoggedIn && email ? email.split("@")[0] : nickname.trim(),
+        authorName: isLoggedIn ? username ?? "회원" : nickname.trim(),
         content,
       });
       setComments((prev) => [...prev, newComment]);

@@ -326,6 +326,13 @@ export async function getPublicHomeSettings(): Promise<CurationSection[]> {
 }
 
 export type BannerPage = "HOME" | "OFF_THE_RECORD";
+export type BannerSize = "PC" | "PC_FULLSCREEN" | "MOBILE";
+
+export const BANNER_SIZE_OPTIONS: { value: BannerSize; label: string }[] = [
+  { value: "PC", label: "기본 PC (1440 x 450)" },
+  { value: "PC_FULLSCREEN", label: "PC 풀스크린 (2560 x 800)" },
+  { value: "MOBILE", label: "모바일 (390 x 210)" },
+];
 
 export interface Banner {
   bannerId: number;
@@ -333,6 +340,7 @@ export interface Banner {
   displayOrder: number;
   active: boolean;
   bannerPage: BannerPage;
+  size: BannerSize;
 }
 
 function mapBanner(raw: Record<string, unknown>): Banner {
@@ -343,7 +351,15 @@ function mapBanner(raw: Record<string, unknown>): Banner {
     displayOrder: Number(raw.displayOrder ?? raw.display_order ?? 0),
     active: raw.active !== false,
     bannerPage: page === "OFF_THE_RECORD" || page === "STORY" ? "OFF_THE_RECORD" : "HOME",
+    size: normalizeBannerSize(raw.size ?? raw.bannerSize ?? raw.banner_size),
   };
+}
+
+function normalizeBannerSize(value: unknown): BannerSize {
+  const size = String(value ?? "PC").toUpperCase();
+  if (size === "PC_FULLSCREEN" || size === "FULLSCREEN" || size === "DESKTOP_FULL") return "PC_FULLSCREEN";
+  if (size === "MOBILE" || size === "MOBILE_390X210") return "MOBILE";
+  return "PC";
 }
 
 export async function getAdminBanners(userId: string, page: BannerPage): Promise<Banner[]> {
@@ -353,35 +369,35 @@ export async function getAdminBanners(userId: string, page: BannerPage): Promise
   return extractArray(raw, ["banners", "items", "content"]).map(mapBanner);
 }
 
-export async function uploadAdminBanner(userId: string, page: BannerPage, file: File): Promise<Banner> {
+export async function uploadAdminBanner(userId: string, page: BannerPage, size: BannerSize, file: File): Promise<Banner> {
   const validationError = validateThumbnailFile(file);
   if (validationError) throw new Error(validationError);
 
   const formData = new FormData();
   formData.append("file", file);
   const raw = await apiFetch<Record<string, unknown>>(
-    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image`,
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image?size=${encodeURIComponent(size)}`,
     { method: "POST", body: formData }
   );
-  return mapBanner(raw);
+  return mapBanner({ ...raw, size: raw.size ?? raw.bannerSize ?? raw.banner_size ?? size });
 }
 
-export async function updateAdminBanner(userId: string, page: BannerPage, file: File): Promise<Banner> {
+export async function updateAdminBanner(userId: string, page: BannerPage, size: BannerSize, file: File): Promise<Banner> {
   const validationError = validateThumbnailFile(file);
   if (validationError) throw new Error(validationError);
 
   const formData = new FormData();
   formData.append("file", file);
   const raw = await apiFetch<Record<string, unknown>>(
-    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image`,
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}/image?size=${encodeURIComponent(size)}`,
     { method: "PUT", body: formData }
   );
-  return mapBanner(raw);
+  return mapBanner({ ...raw, size: raw.size ?? raw.bannerSize ?? raw.banner_size ?? size });
 }
 
-export async function deleteAdminBanner(userId: string, page: BannerPage): Promise<void> {
+export async function deleteAdminBanner(userId: string, page: BannerPage, size: BannerSize): Promise<void> {
   await apiFetch<void>(
-    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}`,
+    `/api/admin/${encodeURIComponent(userId)}/banner/${encodeURIComponent(page)}?size=${encodeURIComponent(size)}`,
     { method: "DELETE" }
   );
 }

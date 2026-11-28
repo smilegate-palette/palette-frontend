@@ -1,6 +1,8 @@
 import { apiFetch, ApiError, USE_MOCK } from "./client";
 import { mockProjects } from "@/data/mockProjects";
 import { Project, ProjectListParams, ProjectListResponse } from "@/lib/types/project";
+import { Comment } from "@/lib/types/comment";
+import { mapCommentResponse } from "./comments";
 import { getStoredUserId } from "@/lib/auth/token";
 
 // 서버에서 내려오는 프로그램 이름을 화면에서 쓰는 값으로 맞춰요 ("팔레트 창의워크숍" 같은 이름으로 와도 처리)
@@ -134,7 +136,7 @@ export async function getProjectsFromApi(
   return { projects, total: projects.length };
 }
 
-export async function getProjectDetail(id: string): Promise<Project | undefined> {
+export async function getProjectDetail(id: string): Promise<(Project & { comments?: Comment[] }) | undefined> {
   // 2026.08 Swagger에 GET /api/project/{project_id}(operationId: GetProjectDetail) 추가됨.
   // 응답 스키마가 제네릭 object라 정확한 필드명은 미확정 - 목록 조회와 같은 ProjectRequest 기반
   // snake_case로 가정하고 mapProjectResponse를 그대로 재사용함. 실제 데이터 보고 다르면 고쳐야 함.
@@ -143,7 +145,13 @@ export async function getProjectDetail(id: string): Promise<Project | undefined>
       `/api/project/${id}`
     );
     const detail = Array.isArray(raw) ? raw[0] : raw;
-    return detail ? mapProjectResponse(detail) : undefined;
+    if (!detail) return undefined;
+    return {
+      ...mapProjectResponse(detail),
+      ...(Array.isArray(detail.comments)
+        ? { comments: (detail.comments as Record<string, unknown>[]).map((comment) => mapCommentResponse(comment, String(detail.project_id ?? detail.projectId ?? id))) }
+        : {}),
+    };
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return undefined;
     throw err;

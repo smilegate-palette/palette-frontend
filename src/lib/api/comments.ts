@@ -14,7 +14,7 @@ import { getStoredUserId } from "@/lib/auth/token";
 // ⚠️ 응답 스키마가 Swagger에 제네릭 object로만 나와 있어 정확한 필드명은 추정치입니다.
 //    실제 데이터 확인되면 아래 mapCommentResponse만 고치면 됩니다.
 
-function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Comment {
+export function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Comment {
   return {
     id: String(raw.id ?? raw.comment_id ?? `comment-${Date.now()}`),
     projectId,
@@ -27,6 +27,7 @@ function mapCommentResponse(raw: Record<string, unknown>, projectId: string): Co
         ""
     ) || undefined,
     authorName: (raw.nickname as string) ?? (raw.author_name as string) ?? "익명",
+    projectTitle: (raw.project_title as string) ?? (raw.projectTitle as string) ?? undefined,
     content: (raw.content as string) ?? "",
     createdAt: (raw.created_at as string) ?? new Date().toISOString(),
   };

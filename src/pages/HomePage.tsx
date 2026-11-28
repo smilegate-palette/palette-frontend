@@ -2,29 +2,54 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import HeroSlider from "@/components/home/HeroSlider";
 import CurationRow from "@/components/home/CurationRow";
-import { getHomeProjects } from "@/lib/api/projects";
-import { getPublicBanners, getPublicHomeSettings, CurationSection } from "@/lib/api/admin";
+import { getPublicBanners, getPublicHomeSettings, CurationSection, Banner } from "@/lib/api/admin";
 import { Project } from "@/lib/types/project";
 
+function getSectionProjects(section: CurationSection): Project[] {
+  return section.projectIds
+    .map((projectId): Project | null => {
+      const title = section.projectTitles[String(projectId)] ?? "";
+      const thumbnailUrl = section.thumbnailUrls[String(projectId)] ?? "";
+      if (!title && !thumbnailUrl) return null;
+      return {
+        id: String(projectId),
+        title,
+        thumbnailUrl,
+        program: "기타",
+        types: [],
+        year: new Date().getFullYear(),
+      } satisfies Project;
+    })
+    .filter((project): project is Project => project !== null);
+}
+
 export default function HomePage() {
-  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
-  const [homeBanner, setHomeBanner] = useState("");
+  const [homeBanners, setHomeBanners] = useState<Banner[]>([]);
   const [curationSections, setCurationSections] = useState<CurationSection[]>([]);
 
   useEffect(() => {
-    // 비로그인 상태에서 401/403이 나도 홈 화면 자체는 깨지지 않게 조용히 무시하고 빈 목록으로 둠
-    // (로그인 요구 안내는 PROJECT 목록 페이지 쪽에서 명확히 보여줌)
-    getHomeProjects()
-      .then(setFeaturedProjects)
-      .catch(() => setFeaturedProjects([]));
     getPublicBanners("HOME")
-      .then((list) => setHomeBanner(list[0]?.imageUrl ?? ""))
-      .catch(() => setHomeBanner(""));
+      .then(setHomeBanners)
+      .catch(() => setHomeBanners([]));
     getPublicHomeSettings()
       .then(setCurationSections)
       .catch(() => setCurationSections([]));
   }, []);
 
+  const homeBanner = homeBanners.find((banner) => banner.size === "PC")?.imageUrl
+    ?? homeBanners[0]?.imageUrl
+    ?? "";
+  const fullscreenBanner = homeBanners.find((banner) => banner.size === "PC_FULLSCREEN")?.imageUrl ?? homeBanner;
+  const mobileBanner = homeBanners.find((banner) => banner.size === "MOBILE")?.imageUrl ?? homeBanner;
+
+  const featuredProjects = Array.from(
+    new Map(
+      curationSections
+        .filter((section) => section.active && section.sectionType === "BOTTOM_CURATION")
+        .flatMap(getSectionProjects)
+        .map((project) => [project.id, project] as const)
+    ).values()
+  );
 
   return (
     <div>
@@ -35,11 +60,11 @@ export default function HomePage() {
           : "relative flex min-h-[260px] flex-col gap-3 overflow-hidden bg-palette-section px-4 py-10 md:min-h-[420px] md:gap-4 md:px-6 md:py-24"}
       >
         {homeBanner && (
-          <img
-            src={homeBanner}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
+          <picture className="absolute inset-0">
+            <source media="(max-width: 767px)" srcSet={mobileBanner} />
+            <source media="(min-width: 2000px)" srcSet={fullscreenBanner} />
+            <img src={homeBanner} alt="" className="h-full w-full object-cover" />
+          </picture>
         )}
         {homeBanner && <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/15 to-transparent" />}
 
@@ -73,21 +98,7 @@ export default function HomePage() {
         .filter((section) => section.active && section.sectionType === "PROJECT_LIST")
         .sort((a, b) => a.displayOrder - b.displayOrder)
         .map((section) => {
-          const projects: Project[] = section.projectIds
-            .map((projectId): Project | null => {
-              const title = section.projectTitles[String(projectId)] ?? "";
-              const thumbnailUrl = section.thumbnailUrls[String(projectId)] ?? "";
-              if (!title && !thumbnailUrl) return null;
-              return {
-                id: String(projectId),
-                title,
-                thumbnailUrl,
-                program: "기타",
-                types: [],
-                year: new Date().getFullYear(),
-              } satisfies Project;
-            })
-            .filter((project): project is Project => project !== null);
+          const projects = getSectionProjects(section);
 
           return (
             <CurationRow

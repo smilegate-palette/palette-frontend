@@ -18,6 +18,8 @@ import {
   updateAdminBanner,
   deleteAdminBanner,
   BannerPage,
+  BannerSize,
+  BANNER_SIZE_OPTIONS,
   Banner,
   CurationSection,
   AdminStory,
@@ -98,6 +100,7 @@ export default function AdminPage() {
   const commentSectionRef = useRef<HTMLElement | null>(null);
 
   const [bannerPage, setBannerPage] = useState<BannerPage>("HOME");
+  const [bannerSize, setBannerSize] = useState<BannerSize>("PC");
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [bannerPreview, setBannerPreview] = useState("");
@@ -481,7 +484,7 @@ export default function AdminPage() {
       .then((list) => {
         if (cancelled) return;
         setBanners(list);
-        const current = list[0];
+        const current = list.find((banner) => banner.size === bannerSize);
         setBannerPreview(current?.imageUrl ?? "");
         setBannerFile(null);
         setBannerError(null);
@@ -494,7 +497,7 @@ export default function AdminPage() {
       });
 
     return () => { cancelled = true; };
-  }, [bannerPage, isAdmin, isLoggedIn, userId]);
+  }, [bannerPage, bannerSize, isAdmin, isLoggedIn, userId]);
 
   const selectBannerFile = (file: File | undefined) => {
     if (!file) return;
@@ -518,10 +521,11 @@ export default function AdminPage() {
     setSavingBanner(true);
     setBannerError(null);
     try {
-      const saved = banners.length > 0
-        ? await updateAdminBanner(userId, bannerPage, bannerFile)
-        : await uploadAdminBanner(userId, bannerPage, bannerFile);
-      setBanners([saved]);
+      const currentBanner = banners.find((banner) => banner.size === bannerSize);
+      const saved = currentBanner
+        ? await updateAdminBanner(userId, bannerPage, bannerSize, bannerFile)
+        : await uploadAdminBanner(userId, bannerPage, bannerSize, bannerFile);
+      setBanners((current) => [...current.filter((banner) => banner.size !== bannerSize), saved]);
       setBannerPreview(saved.imageUrl);
       setBannerFile(null);
       setActionMessage("배너가 저장됐어요.");
@@ -533,14 +537,14 @@ export default function AdminPage() {
   };
 
   const removeBanner = async () => {
-    if (!userId || banners.length === 0) return;
+    if (!userId || !banners.some((banner) => banner.size === bannerSize)) return;
     if (!window.confirm("현재 배너 이미지를 삭제할까요?")) return;
 
     setSavingBanner(true);
     setBannerError(null);
     try {
-      await deleteAdminBanner(userId, bannerPage);
-      setBanners([]);
+      await deleteAdminBanner(userId, bannerPage, bannerSize);
+      setBanners((current) => current.filter((banner) => banner.size !== bannerSize));
       setBannerPreview("");
       setBannerFile(null);
       setActionMessage("배너가 삭제됐어요.");
@@ -1071,7 +1075,21 @@ export default function AdminPage() {
 
         {bannerError && <p className="mb-3 text-sm text-red-500">{bannerError}</p>}
 
-        <Field label="배너 이미지 (10MB 이하, PNG/JPEG/WEBP/GIF)">
+        <div className="mb-4 flex flex-wrap gap-2" role="group" aria-label="배너 사이즈">
+          {BANNER_SIZE_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => setBannerSize(option.value)}
+              aria-pressed={bannerSize === option.value}
+              className={`rounded-md px-3 py-2 text-xs font-semibold md:text-sm ${bannerSize === option.value ? "bg-palette-accent text-white" : "border border-palette-border bg-white"}`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        <Field label={`${BANNER_SIZE_OPTIONS.find((option) => option.value === bannerSize)?.label} 배너 이미지 (10MB 이하, PNG/JPEG/WEBP/GIF)`}>
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1095,9 +1113,9 @@ export default function AdminPage() {
             disabled={savingBanner || !bannerFile}
             className="rounded-md bg-[#1ba2ea] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
           >
-            {savingBanner ? "저장 중..." : banners.length > 0 ? "이미지 수정" : "이미지 업로드"}
+            {savingBanner ? "저장 중..." : banners.some((banner) => banner.size === bannerSize) ? "이미지 수정" : "이미지 업로드"}
           </button>
-          {banners.length > 0 && (
+          {banners.some((banner) => banner.size === bannerSize) && (
             <button
               type="button"
               onClick={removeBanner}

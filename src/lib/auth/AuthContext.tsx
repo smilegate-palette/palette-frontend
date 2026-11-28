@@ -2,18 +2,21 @@ import { createContext, useContext, useState, ReactNode } from "react";
 import {
   getToken,
   getStoredEmail,
+  getStoredUsername,
   getStoredRole,
   getStoredUserId,
   setSession,
+  getUsernameFromToken,
   clearSession,
 } from "./token";
 
 interface AuthState {
   isLoggedIn: boolean;
   email: string | null;
+  username: string | null;
   userId: string | null;
   role: string | null;
-  login: (token: string, email: string, userId?: string, role?: string) => void;
+  login: (token: string, email: string, userId?: string, role?: string, username?: string) => void;
   logout: () => void;
 }
 
@@ -23,13 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 새로고침 시에도 localStorage에서 세션을 복구
   const [token, setToken] = useState<string | null>(() => getToken());
   const [email, setEmail] = useState<string | null>(() => getStoredEmail());
+  const [username, setUsername] = useState<string | null>(() => getStoredUsername());
   const [userId, setUserId] = useState<string | null>(() => getStoredUserId());
   const [role, setRole] = useState<string | null>(() => getStoredRole());
 
-  const login = (newToken: string, newEmail: string, newUserId?: string, newRole?: string) => {
-    setSession(newToken, newEmail, newUserId, newRole);
+  const login = (newToken: string, newEmail: string, newUserId?: string, newRole?: string, newUsername?: string) => {
+    setSession(newToken, newEmail, newUserId, newRole, newUsername);
     setToken(newToken);
     setEmail(newEmail);
+    setUsername(newUsername?.trim() || getUsernameFromToken(newToken));
     setUserId(newUserId ?? null);
     setRole(newRole ?? null);
   };
@@ -38,12 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearSession();
     setToken(null);
     setEmail(null);
+    setUsername(null);
     setUserId(null);
     setRole(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn: !!token, email, userId, role, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn: !!token, email, username, userId, role, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -27,7 +27,12 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
   const getSlideAt = (offset: number) =>
     projects[(activeIndex + offset + projects.length) % projects.length];
 
-  const activeSlide = getSlideAt(0);
+  const visibleCount = Math.min(5, projects.length);
+  const firstOffset = -Math.floor((visibleCount - 1) / 2);
+  const visibleOffsets = Array.from(
+    { length: visibleCount },
+    (_, index) => firstOffset + index
+  );
 
   return (
     <section
@@ -36,14 +41,18 @@ export default function HeroSlider({ projects, intervalMs = 3000 }: HeroSliderPr
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* 시안(Figma HOME): 카드 5장이 보이는 캐러셀 - 양끝은 화면에 걸쳐 잘리고, 가운데 카드가 가장 크고, 양옆에 ‹ › 화살표.
-          프로젝트가 5개보다 적어도 같은 카드가 순환하며 채워져요. 모바일(sm 미만)은 가운데 카드만 보여요. */}
+      {/* 프로젝트 수와 최대 5개 중 작은 수만 표시하며, 모바일(sm 미만)은 가운데 카드만 보여요. */}
       <div className="relative flex items-center justify-center gap-3 md:gap-[min(1.4vw,48px)]">
-        <SlideCard project={getSlideAt(-2)} size="small" className="hidden md:block" />
-        <SlideCard project={getSlideAt(-1)} size="small" className="hidden sm:block" />
-        <SlideCard project={activeSlide} size="large" />
-        <SlideCard project={getSlideAt(1)} size="small" className="hidden sm:block" />
-        <SlideCard project={getSlideAt(2)} size="small" className="hidden md:block" />
+        {visibleOffsets.map((offset) => (
+          <SlideCard
+            key={offset}
+            project={getSlideAt(offset)}
+            size={offset === 0 ? "large" : "small"}
+            className={
+              offset === 0 ? undefined : Math.abs(offset) === 1 ? "hidden sm:block" : "hidden md:block"
+            }
+          />
+        ))}
 
         <button
           aria-label="이전 프로젝트"

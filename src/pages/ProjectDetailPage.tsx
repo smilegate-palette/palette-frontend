@@ -14,7 +14,7 @@ export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { userId, role } = useAuth();
-  const [project, setProject] = useState<Project | undefined | null>(null); // null = 로딩중
+  const [project, setProject] = useState<(Project & { comments?: Comment[] }) | undefined | null>(null); // null = 로딩중
   const [comments, setComments] = useState<Comment[]>([]);
   const [editingDescription, setEditingDescription] = useState(false);
   const [descriptionDraft, setDescriptionDraft] = useState("");
@@ -68,11 +68,13 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (!id) return;
     setProject(null);
+    setComments([]);
     setAuthError(false);
     getProjectDetail(id)
       .then((data) => {
         setProject(data ?? undefined);
-        if (data) getComments(data.id).then(setComments).catch(() => setComments([]));
+        if (data?.comments !== undefined) setComments(data.comments);
+        else if (data) getComments(data.id).then(setComments).catch(() => setComments([]));
       })
       .catch((err) => {
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {

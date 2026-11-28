@@ -1,6 +1,30 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { sendVerificationCode, signup, verifyCode } from "@/lib/api/auth";
+import { ApiError } from "@/lib/api/client";
+
+function getDuplicateSignupMessage(error: unknown): string | null {
+  if (!(error instanceof ApiError)) return null;
+  const message = error.message.toLowerCase();
+  const duplicateText = /duplicate|duplication|already|exists|unique|conflict|중복|이미/;
+  const code = (error.code ?? "").toUpperCase().replace(/[-\s]/g, "_");
+  const duplicateCode = /DUPLICAT|ALREADY|EXISTS|UNIQUE|CONFLICT/.test(code);
+  const usernameDuplicate = /USERNAME|NICKNAME/.test(code) || /username|nickname|닉네임/.test(message);
+  const emailDuplicate = /EMAIL/.test(code) || /email|이메일/.test(message);
+  if (
+    message.includes("이미 가입된 닉네임") ||
+    (usernameDuplicate && (duplicateCode || duplicateText.test(message)))
+  ) {
+    return "이미 가입된 닉네임입니다";
+  }
+  if (
+    message.includes("이미 가입된 이메일") ||
+    (emailDuplicate && (duplicateCode || duplicateText.test(message)))
+  ) {
+    return "이미 가입된 이메일입니다";
+  }
+  return null;
+}
 
 // 실제 Swagger 기준 회원가입(POST /api/signup)은 username/email/password를 한 번에 받습니다.
 // 이메일 인증은 별도 엔드포인트(sendcode/verification)라, 한 화면에서
@@ -36,8 +60,8 @@ export default function SignupPage() {
       setCodeSent(true);
       setVerified(false);
       setCode("");
-    } catch {
-      setCodeError("인증코드 발송에 실패했습니다. 이메일을 확인해주세요.");
+    } catch (err) {
+      setCodeError(getDuplicateSignupMessage(err) ?? "인증코드 발송에 실패했습니다. 이메일을 확인해주세요.");
     } finally {
       setSendingCode(false);
     }
@@ -77,8 +101,8 @@ export default function SignupPage() {
     try {
       await signup({ username, email, password });
       setDone(true);
-    } catch {
-      setSignupError("회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setSignupError(getDuplicateSignupMessage(err) ?? "회원가입에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setSubmitting(false);
     }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AdminStory, getOffTheRecordStories, getPublicBanners } from "@/lib/api/admin";
+import { AdminStory, Banner, getOffTheRecordStories, getPublicBanners } from "@/lib/api/admin";
 
 // 디자인 담당(김하영) 요청 반영:
 // - 항목: 제목 / 업로드 일자 / 썸네일 / 링크(썸네일·제목 클릭 시 새 창으로 이동)
@@ -32,16 +32,23 @@ export default function OffTheRecordPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [bannerFailed, setBannerFailed] = useState(false);
-  const [bannerUrl, setBannerUrl] = useState("");
+  const [banners, setBanners] = useState<Banner[]>([]);
 
   useEffect(() => {
     getPublicBanners("OFF_THE_RECORD")
       .then((list) => {
-        setBannerUrl(list[0]?.imageUrl ?? "");
+        setBanners(list);
         setBannerFailed(false);
       })
-      .catch(() => setBannerFailed(true));
+      .catch(() => {
+        setBanners([]);
+        setBannerFailed(true);
+      });
   }, []);
+
+  const bannerUrl = banners.find((banner) => banner.size === "PC")?.imageUrl ?? banners[0]?.imageUrl ?? "";
+  const fullscreenBanner = banners.find((banner) => banner.size === "PC_FULLSCREEN")?.imageUrl ?? bannerUrl;
+  const mobileBanner = banners.find((banner) => banner.size === "MOBILE")?.imageUrl ?? bannerUrl;
 
   useEffect(() => {
     getOffTheRecordStories()
@@ -56,12 +63,11 @@ export default function OffTheRecordPage() {
           배너 이미지는 아직 전달 전이라 회색 띠로 두었고, public/images/off-the-record-banner.png 를 넣으면 이미지로 바뀌어요. */}
       <section className="relative h-[53.8vw] w-full overflow-hidden bg-[#d9d9d9] md:h-[31.25vw]">
         {!bannerFailed && bannerUrl && (
-          <img
-            src={bannerUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            onError={() => setBannerFailed(true)}
-          />
+          <picture className="absolute inset-0">
+            <source media="(max-width: 767px)" srcSet={mobileBanner} />
+            <source media="(min-width: 2000px)" srcSet={fullscreenBanner} />
+            <img src={bannerUrl} alt="" className="h-full w-full object-cover" onError={() => setBannerFailed(true)} />
+          </picture>
         )}
         <h1
           className="absolute bottom-[10px] left-[19px] font-bold text-white md:bottom-[3.2vw] md:left-[5.14vw]"
